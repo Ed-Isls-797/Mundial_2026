@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mundial 2026</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/index.css">
+</head>
+<body>
+
+    <div class="page">
+
+    <aside class="sidebar">
+        <div class="brand">
+            <span class="brand-mark">26</span>
+            <span class="brand-name">MUNDIAL<br><small>2026</small></span>
+        </div>
+        <nav class="mainnav">
+            <ul>
+                <li><a href="confederaciones.html">Confederaciones</a></li>
+                <li><a href="selecciones.html">Selecciones</a></li>
+                <li><a href="grupos.html">Grupos</a></li>
+                <li><a href="calendario.html">Calendario</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main>
+        <!-- HERO -->
+        <section class="hero">
+            <div class="hero-text">
+                <p class="eyebrow">México · Canadá · Estados Unidos</p>
+                <h1>LA COPA<br>VUELVE A<br>NORTEAMÉRICA</h1>
+                <p class="hero-sub">El torneo más grande de la historia: 48 selecciones, 3 países anfitriones, un solo trofeo.</p>
+                <a href="calendario.html" class="cta">Ver calendario</a>
+            </div>
+
+            <div class="hero-ball-wrap" aria-hidden="true">
+                <div class="ball-shadow"></div>
+                <svg class="ball" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <clipPath id="ballClip">
+                            <circle cx="100" cy="100" r="96"/>
+                        </clipPath>
+                    </defs>
+
+                    <g clip-path="url(#ballClip)">
+                        <circle cx="100" cy="100" r="96" fill="var(--white)"/>
+
+                        <!-- tres paneles en onda, uno por país anfitrión -->
+                        <path d="M100,100 C70,60 30,55 -10,80 L-10,-10 L210,-10 L210,60 C160,40 120,60 100,100 Z" fill="#1f5fd1" opacity="0.92"/>
+                        <path d="M100,100 C140,140 190,145 210,120 L210,210 L-10,210 L-10,140 C40,160 80,140 100,100 Z" fill="#c8102e" opacity="0.92"/>
+                        <path d="M100,100 C60,120 40,160 55,200 L-10,200 L-10,80 C10,120 55,130 100,100 Z" fill="#0a8a4c" opacity="0.92"/>
+
+                        <!-- triangulo central que une a los 3 paises -->
+                        <polygon points="100,72 124,116 76,116" fill="var(--white)" stroke="var(--gold)" stroke-width="3" stroke-linejoin="round"/>
+
+                        <!-- iconos simplificados: estrella (USA), hoja (Canada), aguila (Mexico) -->
+                        <polygon points="100,78 103,86 111,86 104,91 107,99 100,94 93,99 96,91 89,86 97,86" fill="#1f5fd1"/>
+                        <path d="M78,108 l3,-6 l3,6 l6,-2 l-3,7 l5,4 l-7,1 l1,7 l-5,-5 l-5,5 l1,-7 l-7,-1 l5,-4 l-3,-7 Z" fill="#c8102e"/>
+                        <path d="M112,108 q6,-6 12,-2 q-2,6 -8,7 q4,3 2,8 q-6,-1 -8,-6 q-4,3 -8,1 q3,-5 8,-6 q-3,-4 2,-2 Z" fill="#0a8a4c"/>
+
+                        <circle cx="100" cy="100" r="96" fill="none" stroke="var(--gold)" stroke-width="3"/>
+                    </g>
+                </svg>
+            </div>
+        </section>
+
+        <!-- SEDES -->
+        <section class="sedes" id="sedes">
+            <div class="section-heading">
+                <span class="index-tag">Anfitriones</span>
+                <h2>Tres países, una copa</h2>
+            </div>
+
+            <div class="sedes-grid">
+                <article class="sede-card sede-mx">
+                    <div class="sede-flag">🇲🇽</div>
+                    <h3>México</h3>
+                    <p class="sede-detail">Ciudad de México · Guadalajara · Monterrey</p>
+                    <p class="sede-note">Único país en ser sede por tercera vez.</p>
+                </article>
+
+                <article class="sede-card sede-ca">
+                    <div class="sede-flag">🇨🇦</div>
+                    <h3>Canadá</h3>
+                    <p class="sede-detail">Toronto · Vancouver</p>
+                    <p class="sede-note">Primera Copa del Mundo masculina en suelo canadiense.</p>
+                </article>
+
+                <article class="sede-card sede-us">
+                    <div class="sede-flag">🇺🇸</div>
+                    <h3>Estados Unidos</h3>
+                    <p class="sede-detail">Nueva York/Nueva Jersey · Los Ángeles · Miami · Dallas · Atlanta · Houston · Kansas City · Filadelfia · Seattle · San Francisco</p>
+                    <p class="sede-note">Sede de la mayoría de los partidos, incluida la final.</p>
+                </article>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>Mundial 2026 · Sitio no oficial hecho con fines informativos.</p>
+        </footer>
+    </main>
+
+    </div>
+
+</body>
+</html>
