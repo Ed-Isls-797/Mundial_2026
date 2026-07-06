@@ -150,11 +150,13 @@ p.intro {
 }
 
 
+
 .aviso-demo code {
     background-color: rgba(0, 0, 0, 0.06);
     padding: 1px 5px;
     border-radius: 4px;
     font-size: 0.85em;
+    
 }
 
 /* -------- Responsive -------- */
@@ -167,3 +169,8 @@ p.intro {
         grid-template-columns: 1fr;
     }
 }
+
+
+
+
+/*solo es de prueba */
