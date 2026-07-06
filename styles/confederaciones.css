@@ -1,0 +1,306 @@
+:root {
+    --verde-cancha: #0b6e4f;
+    --verde-oscuro: #084c37;
+    --dorado: #d4af37;
+    --gris-claro: #f4f4f4;
+    --gris-medio: #e0e0e0;
+    --texto: #222;
+    --texto-suave: #555;
+    --blanco: #ffffff;
+    --sombra: rgba(0, 0, 0, 0.15);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background-color: var(--gris-claro);
+    color: var(--texto);
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background: linear-gradient(135deg, var(--verde-oscuro), var(--verde-cancha));
+    color: var(--blanco);
+    padding: 30px 20px;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2.2rem;
+    letter-spacing: 1px;
+}
+
+header p {
+    margin: 8px 0 0;
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+main {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 25px 20px 60px;
+}
+
+h2 {
+    color: var(--verde-oscuro);
+    border-bottom: 3px solid var(--dorado);
+    display: inline-block;
+    padding-bottom: 5px;
+    margin-bottom: 20px;
+}
+
+p.intro {
+    line-height: 1.6;
+    color: var(--texto-suave);
+}
+
+/* -------- Menú de Confederaciones -------- */
+.menu-confederaciones {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.confederacion-btn {
+    background-color: var(--blanco);
+    border: 2px solid var(--gris-medio);
+    border-left: 6px solid var(--verde-cancha);
+    border-radius: 8px;
+    padding: 18px 16px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--verde-oscuro);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.confederacion-btn small {
+    display: block;
+    font-weight: normal;
+    color: var(--texto-suave);
+    margin-top: 4px;
+    font-size: 0.8rem;
+}
+
+.confederacion-btn:hover,
+.confederacion-btn:focus {
+    background-color: #eefaf3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px var(--sombra);
+}
+
+.confederacion-btn.activo {
+    background-color: var(--verde-cancha);
+    color: var(--blanco);
+    border-left-color: var(--dorado);
+}
+
+.confederacion-btn.activo small {
+    color: #dfffef;
+}
+
+/* -------- Lista de países -------- */
+#seccion-paises {
+    margin-top: 30px;
+    display: none;
+}
+
+#seccion-paises.visible {
+    display: block;
+}
+
+.paises-titulo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.paises-titulo button.volver {
+    background: none;
+    border: 1px solid var(--verde-cancha);
+    color: var(--verde-cancha);
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.paises-titulo button.volver:hover {
+    background-color: var(--verde-cancha);
+    color: var(--blanco);
+}
+
+.grid-paises {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+}
+
+.pais-card {
+    background-color: var(--blanco);
+    border: 1px solid var(--gris-medio);
+    border-radius: 8px;
+    padding: 16px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pais-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px var(--sombra);
+    border-color: var(--verde-cancha);
+}
+
+.pais-card .bandera {
+    font-size: 2.2rem;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.pais-card .nombre-pais {
+    font-weight: bold;
+    color: var(--texto);
+    font-size: 0.95rem;
+}
+
+.pais-card .grupo-tag {
+    display: inline-block;
+    margin-top: 6px;
+    background-color: var(--gris-claro);
+    color: var(--verde-oscuro);
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--gris-medio);
+}
+
+/* -------- Modal (cuadro emergente) -------- */
+.overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.55);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 15px;
+}
+
+.overlay.visible {
+    display: flex;
+}
+
+.modal {
+    background-color: var(--blanco);
+    border-radius: 10px;
+    max-width: 480px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    animation: aparecer 0.2s ease;
+}
+
+@keyframes aparecer {
+    from { transform: translateY(15px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--verde-oscuro), var(--verde-cancha));
+    color: var(--blanco);
+    padding: 20px;
+    border-radius: 10px 10px 0 0;
+    position: relative;
+    text-align: center;
+}
+
+.modal-header .bandera-grande {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.4rem;
+}
+
+.modal-header .cerrar {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    background: none;
+    border: none;
+    color: var(--blanco);
+    font-size: 1.4rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.dato {
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--gris-medio);
+}
+
+.dato:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.dato .etiqueta {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--verde-cancha);
+    font-weight: bold;
+    margin-bottom: 3px;
+}
+
+.dato .valor {
+    color: var(--texto);
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+
+.mapa-link {
+    display: inline-block;
+    margin-top: 6px;
+    background-color: var(--verde-cancha);
+    color: var(--blanco);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.mapa-link:hover {
+    background-color: var(--verde-oscuro);
+}
+
+.aviso-demo {
+    background-color: #fff8e1;
+    border: 1px solid var(--dorado);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    color: #7a5c00;
+    margin-top: 20px;
+}

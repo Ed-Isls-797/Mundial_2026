@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confederaciones - Mundial 2026</title>
+<link rel="stylesheet" href="styles/confederaciones.css">
+</head>
+<body>
+
+<header>
+    <h1>Confederaciones - Mundial 2026</h1>
+    <p>Selecciona una confederación de la FIFA para ver sus selecciones clasificadas</p>
+</header>
+
+<main>
+    <h2>Confederación por FIFA</h2>
+    <p class="intro">
+        Las seis confederaciones de la FIFA agrupan a las 48 selecciones clasificadas al Mundial 2026
+        de México, Estados Unidos y Canadá. Elige una confederación para ver sus países y después
+        selecciona un país para ver su ficha completa.
+    </p>
+
+    <!-- MENU DE CONFEDERACIONES -->
+    <div class="menu-confederaciones" id="menu-confederaciones"></div>
+
+    <!-- LISTA DE PAISES DE LA CONFEDERACION SELECCIONADA -->
+    <section id="seccion-paises">
+        <div class="paises-titulo">
+            <button class="volver" id="btn-volver">&larr; Volver a confederaciones</button>
+            <h2 id="titulo-confederacion">Países</h2>
+        </div>
+        <div class="grid-paises" id="grid-paises"></div>
+    </section>
+
+</main>
+
+<!-- MODAL / CUADRO EMERGENTE DEL PAIS -->
+<div class="overlay" id="overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <button class="cerrar" id="btn-cerrar">&times;</button>
+            <span class="bandera-grande" id="modal-bandera"></span>
+            <h3 id="modal-nombre"></h3>
+        </div>
+        <div class="modal-body">
+            <div class="dato">
+                <span class="etiqueta">Ranking FIFA</span>
+                <span class="valor" id="modal-ranking"></span>
+            </div>
+            <div class="dato">
+                <span class="etiqueta">Historia en Copas del Mundo</span>
+                <span class="valor" id="modal-historia"></span>
+            </div>
+            <div class="dato">
+                <span class="etiqueta">Ventajas</span>
+                <span class="valor" id="modal-ventajas"></span>
+            </div>
+            <div class="dato">
+                <span class="etiqueta">Desventajas</span>
+                <span class="valor" id="modal-desventajas"></span>
+            </div>
+            <div class="dato">
+                <span class="etiqueta">Entrenador</span>
+                <span class="valor" id="modal-entrenador"></span>
+            </div>
+            <div class="dato">
+                <span class="etiqueta">Grupo</span>
+                <span class="valor" id="modal-grupo"></span>
+            </div>
+            <div class="dato">
+                <span class="etiqueta">Estadio sede</span>
+                <span class="valor" id="modal-estadio"></span><br>
+                <a href="#" target="_blank" class="mapa-link" id="modal-mapa">Ver en Google Maps</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ==============================================================
+   DATOS: Confederaciones y selecciones clasificadas al Mundial 2026
+   (nombres, banderas y grupos son reales; ranking/historia/ventajas/
+   desventajas/entrenador/estadio son datos de ejemplo para el diseño)
+   ============================================================== */
+
+function equipo(nombre, bandera, grupo, estadio, ciudadMapa) {
+    return {
+        nombre: nombre,
+        bandera: bandera,
+        grupo: grupo,
+        ranking: "Por definir (FIFA, junio 2026)",
+        historia: "Selección participante en la fase final del Mundial 2026. Su historial detallado se conectará desde la base de datos.",
+        ventajas: "Plantilla competitiva y buen momento en la fase de clasificación.",
+        desventajas: "Grupo exigente con rivales de alto nivel.",
+        entrenador: "Por confirmar",
+        estadio: estadio,
+        mapa: "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(ciudadMapa)
+    };
+}
+
+const confederaciones = {
+    CONCACAF: {
+        nombreCorto: "CONCACAF",
+        nombreCompleto: "Fútbol de América del Norte, Centroamérica y el Caribe",
+        paises: [
+            equipo("México", "🇲🇽", "A", "Estadio Ciudad de México", "Estadio Ciudad de México, Mexico"),
+            equipo("Canadá", "🇨🇦", "B", "BC Place, Vancouver", "BC Place Vancouver"),
+            equipo("Estados Unidos", "🇺🇸", "D", "Estadio de Seattle", "Lumen Field Seattle"),
+            equipo("Panamá", "🇵🇦", "L", "Estadio de Atlanta", "Mercedes-Benz Stadium Atlanta"),
+            equipo("Haití", "🇭🇹", "C", "Estadio de Boston", "Gillette Stadium Boston"),
+            equipo("Curazao", "🇨🇼", "E", "Estadio de Houston", "NRG Stadium Houston")
+        ]
+    },
+    CONMEBOL: {
+        nombreCorto: "CONMEBOL",
+        nombreCompleto: "Confederación Sudamericana de Fútbol",
+        paises: [
+            equipo("Argentina", "🇦🇷", "J", "Estadio de Dallas", "AT&T Stadium Dallas"),
+            equipo("Brasil", "🇧🇷", "C", "Estadio Nueva York / Nueva Jersey", "MetLife Stadium New Jersey"),
+            equipo("Colombia", "🇨🇴", "K", "Estadio de Kansas City", "Arrowhead Stadium Kansas City"),
+            equipo("Ecuador", "🇪🇨", "E", "Estadio de Filadelfia", "Lincoln Financial Field Philadelphia"),
+            equipo("Paraguay", "🇵🇾", "D", "Estadio Bahía de San Francisco", "Levi's Stadium San Francisco"),
+            equipo("Uruguay", "🇺🇾", "H", "Estadio de Miami", "Hard Rock Stadium Miami")
+        ]
+    },
+    UEFA: {
+        nombreCorto: "UEFA",
+        nombreCompleto: "Unión de Asociaciones Europeas de Fútbol",
+        paises: [
+            equipo("Chequia", "🇨🇿", "A", "Estadio de Atlanta", "Mercedes-Benz Stadium Atlanta"),
+            equipo("Suiza", "🇨🇭", "B", "Estadio de Los Ángeles", "SoFi Stadium Los Angeles"),
+            equipo("Bosnia y Herzegovina", "🇧🇦", "B", "Estadio de Seattle", "Lumen Field Seattle"),
+            equipo("Escocia", "🏴", "C", "Estadio de Boston", "Gillette Stadium Boston"),
+            equipo("Turquía", "🇹🇷", "D", "Estadio Bahía de San Francisco", "Levi's Stadium San Francisco"),
+            equipo("Alemania", "🇩🇪", "E", "Estadio de Houston", "NRG Stadium Houston"),
+            equipo("Países Bajos", "🇳🇱", "F", "Estadio de Toronto", "BMO Field Toronto"),
+            equipo("Suecia", "🇸🇪", "F", "Estadio de Dallas", "AT&T Stadium Dallas"),
+            equipo("Bélgica", "🇧🇪", "G", "Estadio de Miami", "Hard Rock Stadium Miami"),
+            equipo("España", "🇪🇸", "H", "Estadio de Miami", "Hard Rock Stadium Miami"),
+            equipo("Francia", "🇫🇷", "I", "Estadio Nueva York / Nueva Jersey", "MetLife Stadium New Jersey"),
+            equipo("Noruega", "🇳🇴", "I", "Estadio de Filadelfia", "Lincoln Financial Field Philadelphia"),
+            equipo("Austria", "🇦🇹", "J", "Estadio de Kansas City", "Arrowhead Stadium Kansas City"),
+            equipo("Portugal", "🇵🇹", "K", "Estadio de Dallas", "AT&T Stadium Dallas"),
+            equipo("Inglaterra", "🏴", "L", "Estadio de Atlanta", "Mercedes-Benz Stadium Atlanta"),
+            equipo("Croacia", "🇭🇷", "L", "Estadio de Houston", "NRG Stadium Houston")
+        ]
+    },
+    CAF: {
+        nombreCorto: "CAF",
+        nombreCompleto: "Confederación Africana de Fútbol",
+        paises: [
+            equipo("Marruecos", "🇲🇦", "C", "Estadio Nueva York / Nueva Jersey", "MetLife Stadium New Jersey"),
+            equipo("Costa de Marfil", "🇨🇮", "E", "Estadio de Filadelfia", "Lincoln Financial Field Philadelphia"),
+            equipo("Túnez", "🇹🇳", "F", "Estadio de Toronto", "BMO Field Toronto"),
+            equipo("Egipto", "🇪🇬", "G", "Estadio de Miami", "Hard Rock Stadium Miami"),
+            equipo("Senegal", "🇸🇳", "I", "Estadio de Filadelfia", "Lincoln Financial Field Philadelphia"),
+            equipo("Argelia", "🇩🇿", "J", "Estadio de Kansas City", "Arrowhead Stadium Kansas City"),
+            equipo("Ghana", "🇬🇭", "L", "Estadio de Atlanta", "Mercedes-Benz Stadium Atlanta"),
+            equipo("Cabo Verde", "🇨🇻", "H", "Estadio de Miami", "Hard Rock Stadium Miami"),
+            equipo("Sudáfrica", "🇿🇦", "A", "Estadio de Atlanta", "Mercedes-Benz Stadium Atlanta"),
+            equipo("RD Congo", "🇨🇩", "K", "Estadio de Kansas City", "Arrowhead Stadium Kansas City")
+        ]
+    },
+    AFC: {
+        nombreCorto: "AFC",
+        nombreCompleto: "Confederación Asiática de Fútbol",
+        paises: [
+            equipo("Corea del Sur", "🇰🇷", "A", "Estadio de Guadalajara", "Estadio Akron Guadalajara"),
+            equipo("Catar", "🇶🇦", "B", "BC Place, Vancouver", "BC Place Vancouver"),
+            equipo("Japón", "🇯🇵", "F", "Estadio de Toronto", "BMO Field Toronto"),
+            equipo("Irán", "🇮🇷", "G", "Estadio de Miami", "Hard Rock Stadium Miami"),
+            equipo("Arabia Saudita", "🇸🇦", "H", "Estadio de Miami", "Hard Rock Stadium Miami"),
+            equipo("Jordania", "🇯🇴", "J", "Estadio de Kansas City", "Arrowhead Stadium Kansas City"),
+            equipo("Uzbekistán", "🇺🇿", "K", "Estadio de Dallas", "AT&T Stadium Dallas"),
+            equipo("Australia", "🇦🇺", "D", "Estadio de Seattle", "Lumen Field Seattle"),
+            equipo("Iraq", "🇮🇶", "I", "Estadio Nueva York / Nueva Jersey", "MetLife Stadium New Jersey")
+        ]
+    },
+    OFC: {
+        nombreCorto: "OFC",
+        nombreCompleto: "Confederación de Fútbol de Oceanía",
+        paises: [
+            equipo("Nueva Zelanda", "🇳🇿", "G", "Estadio de Miami", "Hard Rock Stadium Miami")
+        ]
+    }
+};
+
+/* ==============================================================
+   RENDER: menú de confederaciones
+   ============================================================== */
+const menuConfederaciones = document.getElementById("menu-confederaciones");
+const seccionPaises = document.getElementById("seccion-paises");
+const gridPaises = document.getElementById("grid-paises");
+const tituloConfederacion = document.getElementById("titulo-confederacion");
+
+Object.keys(confederaciones).forEach(function (clave) {
+    const conf = confederaciones[clave];
+    const btn = document.createElement("button");
+    btn.className = "confederacion-btn";
+    btn.innerHTML = conf.nombreCorto + "<small>" + conf.nombreCompleto + " · " + conf.paises.length + " equipos</small>";
+    btn.addEventListener("click", function () {
+        document.querySelectorAll(".confederacion-btn").forEach(b => b.classList.remove("activo"));
+        btn.classList.add("activo");
+        mostrarPaises(clave);
+    });
+    menuConfederaciones.appendChild(btn);
+});
+
+function mostrarPaises(clave) {
+    const conf = confederaciones[clave];
+    tituloConfederacion.textContent = conf.nombreCorto + " - " + conf.nombreCompleto;
+    gridPaises.innerHTML = "";
+
+    conf.paises.forEach(function (pais) {
+        const card = document.createElement("div");
+        card.className = "pais-card";
+        card.innerHTML =
+            '<span class="bandera">' + pais.bandera + '</span>' +
+            '<span class="nombre-pais">' + pais.nombre + '</span>' +
+            '<span class="grupo-tag">Grupo ' + pais.grupo + '</span>';
+        card.addEventListener("click", function () {
+            abrirModal(pais);
+        });
+        gridPaises.appendChild(card);
+    });
+
+    seccionPaises.classList.add("visible");
+    seccionPaises.scrollIntoView({ behavior: "smooth" });
+}
+
+document.getElementById("btn-volver").addEventListener("click", function () {
+    seccionPaises.classList.remove("visible");
+    document.querySelectorAll(".confederacion-btn").forEach(b => b.classList.remove("activo"));
+});
+
+/* ==============================================================
+   MODAL / CUADRO EMERGENTE
+   ============================================================== */
+const overlay = document.getElementById("overlay");
+
+function abrirModal(pais) {
+    document.getElementById("modal-bandera").textContent = pais.bandera;
+    document.getElementById("modal-nombre").textContent = pais.nombre;
+    document.getElementById("modal-ranking").textContent = pais.ranking;
+    document.getElementById("modal-historia").textContent = pais.historia;
+    document.getElementById("modal-ventajas").textContent = pais.ventajas;
+    document.getElementById("modal-desventajas").textContent = pais.desventajas;
+    document.getElementById("modal-entrenador").textContent = pais.entrenador;
+    document.getElementById("modal-grupo").textContent = "Grupo " + pais.grupo;
+    document.getElementById("modal-estadio").textContent = pais.estadio;
+    document.getElementById("modal-mapa").href = pais.mapa;
+    overlay.classList.add("visible");
+}
+
+function cerrarModal() {
+    overlay.classList.remove("visible");
+}
+
+document.getElementById("btn-cerrar").addEventListener("click", cerrarModal);
+overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) cerrarModal();
+});
+document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") cerrarModal();
+});
+</script>
+
+</body>
+</html>
