@@ -1,0 +1,147 @@
+:root {
+    --navy: #0a1a3c;
+    --blue-deep: #123a7a;
+    --gold: #d4af37;
+    --gold-light: #f0d98c;
+    --white: #f7f5ef;
+    --ink: #f7f5ef;
+    --sidebar-bg: #08163e;
+    --sidebar-border: #d4af37;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    background: #0f182f;
+    color: #f7f5ef;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.page {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 250px;
+    background: var(--sidebar-bg);
+    color: var(--white);
+    padding: 32px 20px;
+    border-right: 3px solid var(--sidebar-border);
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+    z-index: 20;
+}
+
+.sidebar .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-mark {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: var(--navy);
+    display: grid;
+    place-items: center;
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+.brand-name {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 1rem;
+    line-height: 1.1;
+    font-weight: 800;
+}
+
+.brand-name small {
+    display: block;
+    font-size: 0.65rem;
+    letter-spacing: 4px;
+    color: var(--gold-light);
+    margin-top: 4px;
+}
+
+.mainnav ul {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+}
+
+.mainnav a {
+    display: block;
+    color: var(--white);
+    font-weight: 700;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border-left: 4px solid transparent;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.mainnav a:hover,
+.mainnav a.active {
+    background: rgba(212, 175, 55, 0.15);
+    color: #fff;
+    border-left-color: var(--gold);
+}
+
+.home-link {
+    margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.12);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.content {
+    margin-left: 250px;
+    width: calc(100% - 250px);
+    min-height: 100vh;
+}
+
+@media (max-width: 860px) {
+    .page {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        position: relative;
+        width: 100%;
+        min-height: auto;
+        border-right: none;
+        border-bottom: 3px solid var(--sidebar-border);
+    }
+
+    .content {
+        margin-left: 0;
+        width: 100%;
+    }
+}
