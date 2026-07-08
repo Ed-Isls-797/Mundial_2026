@@ -53,6 +53,43 @@ app.get('/api/selecciones', (req, res) => {
     });
 });
 
+//2.mostrar grupos
+// 2. Obtener todos los grupos con sus selecciones
+app.get('/api/grupos', (req, res) => {
+    const query = `
+        SELECT 
+            g.nombre AS nombre_grupo,
+            s.nombre AS nombre_seleccion,
+            s.bandera,
+            s.ranking
+        FROM grupos g
+        INNER JOIN grupo_selecciones gs ON g.id_grupo = gs.id_grupo
+        INNER JOIN selecciones s ON gs.id_seleccion = s.id_seleccion
+        ORDER BY g.nombre, s.ranking
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error en la consulta:', err);
+            return res.status(500).json({ error: 'Error al obtener los grupos' });
+        }
+
+        const grupos = {};
+        results.forEach(row => {
+            if (!grupos[row.nombre_grupo]) grupos[row.nombre_grupo] = [];
+            grupos[row.nombre_grupo].push({
+                nombre: row.nombre_seleccion,
+                bandera: row.bandera,
+                ranking: row.ranking
+            });
+        });
+
+        res.json(grupos);
+    });
+});
+
+
+
 // Levantar el servidor
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
