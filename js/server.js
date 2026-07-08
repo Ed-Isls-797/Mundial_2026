@@ -82,6 +82,7 @@ app.get('/api/grupos', (req, res) => {
 });
 
 
+
 // Levantar el servidor
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
