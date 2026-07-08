@@ -60,7 +60,7 @@ app.get('/api/grupos', (req, res) => {
             g.nombre AS nombre_grupo,
             s.nombre AS nombre_seleccion
         FROM grupos g
-        INNER JOIN grupos_selecciones gs ON g.id_grupo = gs.id_grupo
+        INNER JOIN grupo_selecciones gs ON g.id_grupo = gs.id_grupo
         INNER JOIN selecciones s ON gs.id_seleccion = s.id_seleccion
         ORDER BY g.nombre, s.ranking
     `;
@@ -80,7 +80,6 @@ app.get('/api/grupos', (req, res) => {
         res.json(grupos);
     });
 });
-
 
 
 // Levantar el servidor
