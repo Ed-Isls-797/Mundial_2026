@@ -131,7 +131,7 @@ function agruparPorConfederacion(selecciones) {
     
     // 1. Diccionario de banderas 
     const banderasEmoji = {
-        "México": "🇲🇽", "Canadá": "🇨🇦", "Estados Unidos": "🇺🇸", "Panamá": "🇵🇦", "Haití": "🇭🇹", "Curazao": "🇨🇼",
+        "México": "🎈", "Canadá": "🇨🇦", "Estados Unidos": "🇺🇸", "Panamá": "🇵🇦", "Haití": "🇭🇹", "Curazao": "🇨🇼",
         "Argentina": "🇦🇷", "Brasil": "🇧🇷", "Colombia": "🇨🇴", "Ecuador": "🇪🇨", "Paraguay": "🇵🇾", "Uruguay": "🇺🇾",
         "República Checa": "🇨🇿", "Chequia": "🇨🇿", "Suiza": "🇨🇭", "Bosnia y Herzegovina": "🇧🇦", "Escocia": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", 
         "Turquía": "🇹🇷", "Alemania": "🇩🇪", "Países Bajos": "🇳🇱", "Suecia": "🇸🇪", "Bélgica": "🇧🇪", "España": "🇪🇸", 
@@ -141,7 +141,6 @@ function agruparPorConfederacion(selecciones) {
         "Corea del Sur": "🇰🇷", "Qatar": "🇶🇦", "Japón": "🇯🇵", "Irán": "🇮🇷", "Arabia Saudita": "🇸🇦", "Jordania": "🇯🇴", 
         "Uzbekistán": "🇺🇿", "Australia": "🇦🇺", "Irak": "🇮🇶", "Nueva Zelanda": "🇳🇿"
     };
-
     // 2. Diccionario de sedes 
     const sedesEstadios = {
         "México": { nombre: "Estadio Ciudad de México", query: "Estadio Ciudad de México, Mexico" },
@@ -304,5 +303,6 @@ document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") cerrarModal();
 });
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/twemoji.min.js"></script>
 </body>
 </html>
