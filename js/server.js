@@ -54,16 +54,13 @@ app.get('/api/selecciones', (req, res) => {
 });
 
 //2.mostrar grupos
-// 2. Obtener todos los grupos con sus selecciones
 app.get('/api/grupos', (req, res) => {
     const query = `
         SELECT 
             g.nombre AS nombre_grupo,
-            s.nombre AS nombre_seleccion,
-            s.bandera,
-            s.ranking
+            s.nombre AS nombre_seleccion
         FROM grupos g
-        INNER JOIN grupo_selecciones gs ON g.id_grupo = gs.id_grupo
+        INNER JOIN grupos_selecciones gs ON g.id_grupo = gs.id_grupo
         INNER JOIN selecciones s ON gs.id_seleccion = s.id_seleccion
         ORDER BY g.nombre, s.ranking
     `;
@@ -77,11 +74,7 @@ app.get('/api/grupos', (req, res) => {
         const grupos = {};
         results.forEach(row => {
             if (!grupos[row.nombre_grupo]) grupos[row.nombre_grupo] = [];
-            grupos[row.nombre_grupo].push({
-                nombre: row.nombre_seleccion,
-                bandera: row.bandera,
-                ranking: row.ranking
-            });
+            grupos[row.nombre_grupo].push(row.nombre_seleccion);
         });
 
         res.json(grupos);

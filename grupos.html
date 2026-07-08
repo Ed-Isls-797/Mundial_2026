@@ -145,6 +145,58 @@
             </ol>
         </article>
 
+        <article class="grupo-card" data-grupo="Grupo I">
+            <div class="grupo-header">
+                <span class="grupo-letra">I</span>
+                <h3>Grupo I</h3>
+            </div>
+            <ol class="lista-equipos">
+                <li><span class="pos">1</span><span class="equipo">Cargando...</span></li>
+                <li><span class="pos">2</span><span class="equipo">Cargando...</span></li>
+                <li><span class="pos">3</span><span class="equipo">Cargando...</span></li>
+                <li><span class="pos">4</span><span class="equipo">Cargando...</span></li>
+            </ol>
+        </article>
+
+        <article class="grupo-card" data-grupo="Grupo J">
+            <div class="grupo-header">
+                <span class="grupo-letra">J</span>
+                <h3>Grupo J</h3>
+            </div>
+            <ol class="lista-equipos">
+                <li><span class="pos">1</span><span class="equipo">Cargando...</span></li>
+                <li><span class="pos">2</span><span class="equipo">Cargando...</span></li>
+                <li><span class="pos">3</span><span class="equipo">Cargando...</span></li>
+                <li><span class="pos">4</span><span class="equipo">Cargando...</span></li>
+            </ol>
+        </article>
+
+        <article class="grupo-card" data-grupo="Grupo K">
+            <div class="grupo-header">
+                <span class="grupo-letra">K</span>
+                <h3>Grupo K</h3>
+            </div>
+            <ol class="lista-equipos">
+                <li><span class="pos">1</span><span class="equipo">Cargando...</span></li>
+                <li><span class="pos">2</span><span class="equipo">Cargando...</span></li>
+                <li><span class="pos">3</span><span class="equipo">Cargando...</span></li>
+                <li><span class="pos">4</span><span class="equipo">Cargando...</span></li>
+            </ol>
+        </article>
+
+        <article class="grupo-card" data-grupo="Grupo L">
+            <div class="grupo-header">
+                <span class="grupo-letra">L</span>
+                <h3>Grupo L</h3>
+            </div>
+            <ol class="lista-equipos">
+                <li><span class="pos">1</span><span class="equipo">Cargando...</span></li>
+                <li><span class="pos">2</span><span class="equipo">Cargando...</span></li>
+                <li><span class="pos">3</span><span class="equipo">Cargando...</span></li>
+                <li><span class="pos">4</span><span class="equipo">Cargando...</span></li>
+            </ol>
+        </article>
+
     </div>
 
 </main>
@@ -169,22 +221,12 @@
             // Por cada tarjeta de grupo en el HTML, buscamos su data-grupo
             document.querySelectorAll('.grupo-card').forEach(card => {
                 const nombreGrupo = card.getAttribute('data-grupo'); // ej. "Grupo A"
-                const equipos = grupos[nombreGrupo];
+                const equipos = grupos[nombreGrupo]; // arreglo de nombres, ej. ["México", "Sudáfrica", ...]
                 const items = card.querySelectorAll('.lista-equipos li .equipo');
 
-                if (!equipos) {
-                    // No hay datos para este grupo todavía
-                    items.forEach(item => item.textContent = 'Por definir');
-                    return;
-                }
-
                 items.forEach((item, index) => {
-                    const equipo = equipos[index];
-                    if (equipo) {
-                        item.textContent = `${equipo.bandera ? equipo.bandera + ' ' : ''}${equipo.nombre}`;
-                    } else {
-                        item.textContent = 'Por definir';
-                    }
+                    const nombreEquipo = equipos ? equipos[index] : null;
+                    item.textContent = nombreEquipo || 'Por definir';
                 });
             });
 
