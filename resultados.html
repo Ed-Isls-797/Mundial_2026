@@ -50,7 +50,6 @@
             </select>
         </div>
 
-
         <div class="tabla-wrap">
             <table class="partidos">
                 <thead>
@@ -115,35 +114,25 @@
     // URLs de la API. Cambia esto si tu server.js corre en otra IP/puerto.
     const API_BASE = 'http://localhost:3000/api';
 
-    const selFase = document.getElementById('sel-fase');
-    const selLocal = document.getElementById('sel-local');
-    const selVisitante = document.getElementById('sel-visitante');
-    const selEstadio = document.getElementById('sel-estadio');
     const filtroFase = document.getElementById('filtro-fase');
     const filtroGrupo = document.getElementById('filtro-grupo');
     const filtroClasificacion = document.getElementById('filtro-clasificacion');
     const tablaBody = document.getElementById('tabla-body');
     const clasificacionBody = document.getElementById('clasificacion-body');
-    const mensajeForm = document.getElementById('mensaje-form');
 
-    // ---------- Cargar catálogos (fases, grupos, estadios, selecciones) ----------
+    // ---------- Cargar catálogos (fases y grupos, para los filtros) ----------
     async function cargarCatalogos() {
         try {
-            const [fasesRes, gruposRes, estadiosRes, seleccionesRes] = await Promise.all([
+            const [fasesRes, gruposRes] = await Promise.all([
                 fetch(`${API_BASE}/fases`),
-                fetch(`${API_BASE}/grupos/lista`),
-                fetch(`${API_BASE}/estadios`),
-                fetch(`${API_BASE}/selecciones`)
+                fetch(`${API_BASE}/grupos/lista`)
             ]);
 
             const fases = await fasesRes.json();
             const grupos = await gruposRes.json();
-            const estadios = await estadiosRes.json();
-            const selecciones = await seleccionesRes.json();
 
             // Fases
             fases.forEach(f => {
-                selFase.add(new Option(f.nombre, f.id_fase));
                 filtroFase.add(new Option(f.nombre, f.nombre));
             });
 
@@ -153,60 +142,10 @@
                 filtroClasificacion.add(new Option(`Grupo ${g.nombre}`, g.nombre));
             });
 
-            // Estadios
-            estadios.forEach(e => {
-                selEstadio.add(new Option(`${e.nombre} (${e.ciudad})`, e.id_estadio));
-            });
-
-            // Selecciones (para local y visitante)
-            selecciones
-                .slice()
-                .sort((a, b) => a.nombre_seleccion.localeCompare(b.nombre_seleccion))
-                .forEach(s => {
-                    const texto = `${s.bandera ? s.bandera + ' ' : ''}${s.nombre_seleccion}`;
-                    selLocal.add(new Option(texto, s.id_seleccion));
-                    selVisitante.add(new Option(texto, s.id_seleccion));
-                });
-
         } catch (error) {
             console.error('Error al cargar catálogos:', error);
-            mensajeForm.textContent = 'No se pudieron cargar los catálogos. ¿El servidor está corriendo?';
-            mensajeForm.className = 'mensaje error';
         }
     }
-
-    // ---------- Programar un nuevo partido ----------
-    document.getElementById('form-partido').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        mensajeForm.textContent = '';
-
-        const body = {
-            id_fase: Number(selFase.value),
-            id_local: Number(selLocal.value),
-            id_visitante: Number(selVisitante.value),
-            fecha: document.getElementById('input-fecha').value,
-            id_estadio: Number(selEstadio.value)
-        };
-
-        try {
-            const response = await fetch(`${API_BASE}/partidos`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            const data = await response.json();
-
-            if (!response.ok) throw new Error(data.error || 'Error al programar el partido');
-
-            mensajeForm.textContent = 'Partido programado correctamente.';
-            mensajeForm.className = 'mensaje ok';
-            e.target.reset();
-            cargarPartidos();
-        } catch (error) {
-            mensajeForm.textContent = error.message;
-            mensajeForm.className = 'mensaje error';
-        }
-    });
 
     // ---------- Listar partidos ----------
     async function cargarPartidos() {
