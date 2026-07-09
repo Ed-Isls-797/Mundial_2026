@@ -1,6 +1,6 @@
 :root {
-    --verde-cancha: #0b6e4f;
-    --verde-oscuro: #084c37;
+    --verde-cancha: #14336b;
+    --verde-oscuro: #0a1a3a;
     --dorado: #d4af37;
     --gris-claro: #f4f4f4;
     --gris-medio: #e0e0e0;
@@ -109,6 +109,14 @@ p.intro {
     margin: 0;
     font-size: 1.1rem;
     letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.grupo-emoji {
+    font-size: 1.15rem;
+    line-height: 1;
 }
 
 .lista-equipos {
@@ -149,14 +157,11 @@ p.intro {
     color: var(--texto);
 }
 
-
-
 .aviso-demo code {
     background-color: rgba(0, 0, 0, 0.06);
     padding: 1px 5px;
     border-radius: 4px;
     font-size: 0.85em;
-    
 }
 
 /* -------- Responsive -------- */
@@ -170,7 +175,3 @@ p.intro {
     }
 }
 
-
-
-
-/*solo es de prueba */

@@ -209,6 +209,13 @@
     // URL de tu API. Cambia esto si tu server.js corre en otra IP/puerto.
     const API_URL = 'http://localhost:3000/api/grupos';
 
+    // Extrae solo la letra del grupo, sin importar si viene como "A", "Grupo A", "grupo a", etc.
+    function extraerLetra(nombre) {
+        if (!nombre) return '';
+        const partes = nombre.trim().split(' ');
+        return partes[partes.length - 1].toUpperCase(); // toma la última palabra y la pone en mayúscula
+    }
+
     async function cargarGrupos() {
         try {
             const response = await fetch(API_URL);
@@ -219,10 +226,21 @@
 
             const grupos = await response.json();
 
-            // Por cada tarjeta de grupo en el HTML, buscamos su data-grupo
+            // Normalizamos las llaves del objeto que llegó de la API (por si acaso)
+            const gruposPorLetra = {};
+            for (const key in grupos) {
+                const letra = extraerLetra(key);
+                gruposPorLetra[letra] = grupos[key];
+            }
+
+            console.log('Grupos recibidos de la API:', grupos);
+            console.log('Grupos normalizados por letra:', gruposPorLetra);
+
+            // Por cada tarjeta de grupo en el HTML, buscamos su letra
             document.querySelectorAll('.grupo-card').forEach(card => {
-                const nombreGrupo = card.getAttribute('data-grupo'); // ej. "Grupo A"
-                const equipos = grupos[nombreGrupo]; // arreglo de nombres, ej. ["México", "Sudáfrica", ...]
+                const nombreGrupoHTML = card.getAttribute('data-grupo'); // ej. "Grupo A"
+                const letra = extraerLetra(nombreGrupoHTML); // "A"
+                const equipos = gruposPorLetra[letra]; // arreglo de nombres, ej. ["México", "Sudáfrica", ...]
                 const items = card.querySelectorAll('.lista-equipos li .equipo');
 
                 items.forEach((item, index) => {
