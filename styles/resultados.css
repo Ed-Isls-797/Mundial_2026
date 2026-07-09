@@ -1,0 +1,293 @@
+:root {
+    --verde-cancha: #0b6e4f;
+    --verde-oscuro: #084c37;
+    --dorado: #d4af37;
+    --gris-claro: #f4f4f4;
+    --gris-medio: #e0e0e0;
+    --texto: #222;
+    --texto-suave: #555;
+    --blanco: #ffffff;
+    --sombra: rgba(0, 0, 0, 0.15);
+    --rojo: #b3261e;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background-color: var(--gris-claro);
+    color: var(--texto);
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background: linear-gradient(135deg, var(--verde-oscuro), var(--verde-cancha));
+    color: var(--blanco);
+    padding: 30px 20px;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2.2rem;
+    letter-spacing: 1px;
+}
+
+header p {
+    margin: 8px 0 0;
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 25px 20px 60px;
+}
+
+h2 {
+    color: var(--verde-oscuro);
+    border-bottom: 3px solid var(--dorado);
+    display: inline-block;
+    padding-bottom: 5px;
+    margin-bottom: 20px;
+}
+
+p.intro {
+    line-height: 1.6;
+    color: var(--texto-suave);
+}
+
+/* -------- Formulario de carga -------- */
+.panel {
+    background: var(--blanco);
+    border: 1px solid var(--gris-medio);
+    border-radius: 12px;
+    padding: 22px 24px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 12px var(--sombra);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.form-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--texto-suave);
+}
+
+.form-grid select,
+.form-grid input {
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 9px 10px;
+    border: 1px solid var(--gris-medio);
+    border-radius: 8px;
+    background: var(--gris-claro);
+    color: var(--texto);
+}
+
+.form-grid select:focus,
+.form-grid input:focus {
+    outline: none;
+    border-color: var(--verde-cancha);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--verde-cancha);
+    color: var(--blanco);
+    border: none;
+    padding: 11px 20px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.btn:hover {
+    background: var(--verde-oscuro);
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+.btn-dorado {
+    background: var(--dorado);
+    color: var(--verde-oscuro);
+}
+
+.btn-dorado:hover {
+    background: #c29d2c;
+}
+
+.btn-eliminar {
+    background: transparent;
+    color: var(--rojo);
+    border: 1px solid var(--rojo);
+    padding: 6px 10px;
+    font-size: 0.8rem;
+}
+
+.btn-eliminar:hover {
+    background: rgba(179, 38, 30, 0.08);
+}
+
+.mensaje {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.mensaje.ok { color: var(--verde-cancha); }
+.mensaje.error { color: var(--rojo); }
+
+/* -------- Filtros -------- */
+.filtros {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.filtros select {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--gris-medio);
+    font-family: inherit;
+}
+
+/* -------- Tabla de partidos -------- */
+.tabla-wrap {
+    background: var(--blanco);
+    border: 1px solid var(--gris-medio);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px var(--sombra);
+}
+
+table.partidos {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+
+table.partidos thead {
+    background: linear-gradient(135deg, var(--verde-oscuro), var(--verde-cancha));
+    color: var(--blanco);
+}
+
+table.partidos th,
+table.partidos td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--gris-medio);
+}
+
+table.partidos tbody tr:last-child td {
+    border-bottom: none;
+}
+
+table.partidos tbody tr:hover {
+    background: var(--gris-claro);
+}
+
+.equipo-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.marcador {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.marcador input {
+    width: 46px;
+    text-align: center;
+    padding: 6px 4px;
+    border: 1px solid var(--gris-medio);
+    border-radius: 6px;
+    font-weight: 700;
+}
+
+.marcador.penales input {
+    width: 38px;
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--texto-suave);
+}
+
+td small {
+    color: var(--texto-suave);
+    font-weight: 400;
+}
+
+.badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.badge.jugado {
+    background: rgba(11, 110, 79, 0.12);
+    color: var(--verde-cancha);
+}
+
+.badge.programado {
+    background: rgba(212, 175, 55, 0.18);
+    color: #8a6d1a;
+}
+
+.acciones {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.vacio {
+    text-align: center;
+    color: var(--texto-suave);
+    padding: 30px;
+}
+
+/* -------- Responsive -------- */
+@media (max-width: 700px) {
+    header h1 {
+        font-size: 1.6rem;
+    }
+
+    table.partidos {
+        font-size: 0.82rem;
+    }
+
+    .tabla-wrap {
+        overflow-x: auto;
+    }
+
+    table.partidos {
+        min-width: 720px;
+    }
+}

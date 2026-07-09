@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resultados - Mundial 2026</title>
+<link rel="stylesheet" href="styles/sidebar.css">
+<link rel="stylesheet" href="styles/resultados.css">
+</head>
+<body>
+<div class="page">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">26</div>
+      <div class="brand-name">Mundial<small>2026</small></div>
+    </div>
+    <nav class="mainnav">
+      <ul>
+        <li><a href="confederaciones.html">Confederaciones</a></li>
+        <li><a href="selecciones.html">Selecciones</a></li>
+        <li><a href="grupos.html">Grupos</a></li>
+        <li><a href="calendario.html">Calendario</a></li>
+        <li><a href="resultados.html" class="active">Resultados</a></li>
+      </ul>
+    </nav>
+    <a href="index.html" class="home-link">Home</a>
+  </aside>
+
+  <div class="content">
+<header>
+    <h1>Resultados del Mundial 2026</h1>
+    <p>Carga partidos y marcadores por fase — la tabla de posiciones se actualiza sola</p>
+</header>
+
+<main>
+
+    <!-- ===== Panel: cargar nuevo partido (admin) ===== -->
+    <section class="panel">
+        <h2>Cargar nuevo partido</h2>
+        <p class="intro">Selecciona la fase y las dos selecciones para programar un partido.</p>
+
+        <form id="form-partido">
+            <div class="form-grid">
+                <label>
+                    Fase
+                    <select id="sel-fase" required></select>
+                </label>
+                <label>
+                    Selección local
+                    <select id="sel-local" required></select>
+                </label>
+                <label>
+                    Selección visitante
+                    <select id="sel-visitante" required></select>
+                </label>
+                <label>
+                    Fecha y hora
+                    <input type="datetime-local" id="input-fecha" required>
+                </label>
+                <label>
+                    Estadio
+                    <select id="sel-estadio" required></select>
+                </label>
+            </div>
+            <button type="submit" class="btn">Programar partido</button>
+            <p id="mensaje-form" class="mensaje"></p>
+        </form>
+    </section>
+
+    <!-- ===== Panel: listado y carga de resultados ===== -->
+    <section>
+        <h2>Partidos y resultados</h2>
+
+        <div class="filtros">
+            <label for="filtro-fase">Fase:</label>
+            <select id="filtro-fase">
+                <option value="">Todas</option>
+            </select>
+
+            <label for="filtro-grupo">Grupo:</label>
+            <select id="filtro-grupo">
+                <option value="">Todos</option>
+            </select>
+        </div>
+        
+
+        <div class="tabla-wrap">
+            <table class="partidos">
+                <thead>
+                    <tr>
+                        <th>Fase</th>
+                        <th>Grupo</th>
+                        <th>Local</th>
+                        <th>Marcador</th>
+                        <th>Pen.</th>
+                        <th>Visitante</th>
+                        <th>Fecha / Estadio</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-body">
+                    <tr><td colspan="9" class="vacio">Cargando partidos...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ===== Panel: tabla de posiciones (se recalcula automáticamente) ===== -->
+    <section>
+        <h2>Tabla de posiciones</h2>
+        <p class="intro">Se recalcula automáticamente cada vez que guardas un resultado de la Fase de grupos.</p>
+
+        <div class="filtros">
+            <label for="filtro-clasificacion">Grupo:</label>
+            <select id="filtro-clasificacion"></select>
+        </div>
+
+        <div class="tabla-wrap">
+            <table class="partidos" id="tabla-clasificacion">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Selección</th>
+                        <th>PJ</th>
+                        <th>PG</th>
+                        <th>PE</th>
+                        <th>PP</th>
+                        <th>GF</th>
+                        <th>GC</th>
+                        <th>DG</th>
+                        <th>Pts</th>
+                    </tr>
+                </thead>
+                <tbody id="clasificacion-body">
+                    <tr><td colspan="10" class="vacio">Selecciona un grupo...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</main>
+
+  </div>
+</div>
+
+<script>
+    // URLs de la API. Cambia esto si tu server.js corre en otra IP/puerto.
+    const API_BASE = 'http://localhost:3000/api';
+
+    const selFase = document.getElementById('sel-fase');
+    const selLocal = document.getElementById('sel-local');
+    const selVisitante = document.getElementById('sel-visitante');
+    const selEstadio = document.getElementById('sel-estadio');
+    const filtroFase = document.getElementById('filtro-fase');
+    const filtroGrupo = document.getElementById('filtro-grupo');
+    const filtroClasificacion = document.getElementById('filtro-clasificacion');
+    const tablaBody = document.getElementById('tabla-body');
+    const clasificacionBody = document.getElementById('clasificacion-body');
+    const mensajeForm = document.getElementById('mensaje-form');
+
+    // ---------- Cargar catálogos (fases, grupos, estadios, selecciones) ----------
+    async function cargarCatalogos() {
+        try {
+            const [fasesRes, gruposRes, estadiosRes, seleccionesRes] = await Promise.all([
+                fetch(`${API_BASE}/fases`),
+                fetch(`${API_BASE}/grupos/lista`),
+                fetch(`${API_BASE}/estadios`),
+                fetch(`${API_BASE}/selecciones`)
+            ]);
+
+            const fases = await fasesRes.json();
+            const grupos = await gruposRes.json();
+            const estadios = await estadiosRes.json();
+            const selecciones = await seleccionesRes.json();
+
+            // Fases
+            fases.forEach(f => {
+                selFase.add(new Option(f.nombre, f.id_fase));
+                filtroFase.add(new Option(f.nombre, f.nombre));
+            });
+
+            // Grupos (letra tal cual está en la BD: A, B, C...)
+            grupos.forEach(g => {
+                filtroGrupo.add(new Option(`Grupo ${g.nombre}`, g.nombre));
+                filtroClasificacion.add(new Option(`Grupo ${g.nombre}`, g.nombre));
+            });
+
+            // Estadios
+            estadios.forEach(e => {
+                selEstadio.add(new Option(`${e.nombre} (${e.ciudad})`, e.id_estadio));
+            });
+
+            // Selecciones (para local y visitante)
+            selecciones
+                .slice()
+                .sort((a, b) => a.nombre_seleccion.localeCompare(b.nombre_seleccion))
+                .forEach(s => {
+                    const texto = `${s.bandera ? s.bandera + ' ' : ''}${s.nombre_seleccion}`;
+                    selLocal.add(new Option(texto, s.id_seleccion));
+                    selVisitante.add(new Option(texto, s.id_seleccion));
+                });
+
+        } catch (error) {
+            console.error('Error al cargar catálogos:', error);
+            mensajeForm.textContent = 'No se pudieron cargar los catálogos. ¿El servidor está corriendo?';
+            mensajeForm.className = 'mensaje error';
+        }
+    }
+
+    // ---------- Programar un nuevo partido ----------
+    document.getElementById('form-partido').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        mensajeForm.textContent = '';
+
+        const body = {
+            id_fase: Number(selFase.value),
+            id_local: Number(selLocal.value),
+            id_visitante: Number(selVisitante.value),
+            fecha: document.getElementById('input-fecha').value,
+            id_estadio: Number(selEstadio.value)
+        };
+
+        try {
+            const response = await fetch(`${API_BASE}/partidos`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await response.json();
+
+            if (!response.ok) throw new Error(data.error || 'Error al programar el partido');
+
+            mensajeForm.textContent = 'Partido programado correctamente.';
+            mensajeForm.className = 'mensaje ok';
+            e.target.reset();
+            cargarPartidos();
+        } catch (error) {
+            mensajeForm.textContent = error.message;
+            mensajeForm.className = 'mensaje error';
+        }
+    });
+
+    // ---------- Listar partidos ----------
+    async function cargarPartidos() {
+        tablaBody.innerHTML = '<tr><td colspan="9" class="vacio">Cargando partidos...</td></tr>';
+
+        try {
+            const params = new URLSearchParams();
+            if (filtroFase.value) params.set('fase', filtroFase.value);
+            if (filtroGrupo.value) params.set('grupo', filtroGrupo.value);
+
+            const response = await fetch(`${API_BASE}/partidos?${params.toString()}`);
+            const partidos = await response.json();
+            if (!response.ok) throw new Error('Error al obtener los partidos');
+
+            if (!partidos.length) {
+                tablaBody.innerHTML = '<tr><td colspan="9" class="vacio">Aún no hay partidos cargados.</td></tr>';
+                return;
+            }
+
+            tablaBody.innerHTML = '';
+            partidos.forEach(p => tablaBody.appendChild(crearFila(p)));
+
+        } catch (error) {
+            console.error('Error al cargar partidos:', error);
+            tablaBody.innerHTML = '<tr><td colspan="9" class="vacio">Error al cargar los partidos.</td></tr>';
+        }
+    }
+
+    function crearFila(p) {
+        const tr = document.createElement('tr');
+
+        const fechaTexto = p.fecha
+            ? new Date(p.fecha).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })
+            : 'Por definir';
+
+        const penalesTexto = (p.penales_local !== null && p.penales_visitante !== null)
+            ? `(${p.penales_local}-${p.penales_visitante})`
+            : '';
+
+        tr.innerHTML = `
+            <td>${p.fase}</td>
+            <td>${p.grupo || '—'}</td>
+            <td class="equipo-cell">${p.bandera_local ? p.bandera_local + ' ' : ''}${p.local}</td>
+            <td>
+                <div class="marcador">
+                    <input type="number" min="0" class="input-local" value="${p.goles_local ?? ''}" placeholder="-">
+                    <span>:</span>
+                    <input type="number" min="0" class="input-visitante" value="${p.goles_visitante ?? ''}" placeholder="-">
+                </div>
+            </td>
+            <td>
+                <div class="marcador penales">
+                    <input type="number" min="0" class="input-pen-local" value="${p.penales_local ?? ''}" placeholder="-" title="Penales local">
+                    <span>-</span>
+                    <input type="number" min="0" class="input-pen-visitante" value="${p.penales_visitante ?? ''}" placeholder="-" title="Penales visitante">
+                </div>
+            </td>
+            <td class="equipo-cell">${p.bandera_visitante ? p.bandera_visitante + ' ' : ''}${p.visitante}</td>
+            <td>${fechaTexto}<br><small>${p.estadio || ''}</small></td>
+            <td><span class="badge ${p.estado}">${p.estado}</span></td>
+            <td class="acciones">
+                <button class="btn btn-dorado btn-guardar">Guardar</button>
+                <button class="btn btn-eliminar">Eliminar</button>
+            </td>
+        `;
+
+        tr.querySelector('.btn-guardar').addEventListener('click', () => guardarResultado(p.id_partido, tr));
+        tr.querySelector('.btn-eliminar').addEventListener('click', () => eliminarPartido(p.id_partido));
+
+        return tr;
+    }
+
+    async function guardarResultado(idPartido, fila) {
+        const golesLocal = fila.querySelector('.input-local').value;
+        const golesVisitante = fila.querySelector('.input-visitante').value;
+        const penLocal = fila.querySelector('.input-pen-local').value;
+        const penVisitante = fila.querySelector('.input-pen-visitante').value;
+
+        if (golesLocal === '' || golesVisitante === '') {
+            alert('Ingresa el marcador completo antes de guardar.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/partidos/${idPartido}/resultado`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    goles_local: Number(golesLocal),
+                    goles_visitante: Number(golesVisitante),
+                    penales_local: penLocal === '' ? null : Number(penLocal),
+                    penales_visitante: penVisitante === '' ? null : Number(penVisitante)
+                })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Error al guardar el resultado');
+
+            cargarPartidos();
+            if (filtroClasificacion.value) cargarClasificacion();
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    async function eliminarPartido(idPartido) {
+        if (!confirm('¿Eliminar este partido?')) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/partidos/${idPartido}`, { method: 'DELETE' });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Error al eliminar el partido');
+
+            cargarPartidos();
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    // ---------- Tabla de posiciones ----------
+    async function cargarClasificacion() {
+        const grupo = filtroClasificacion.value;
+        if (!grupo) {
+            clasificacionBody.innerHTML = '<tr><td colspan="10" class="vacio">Selecciona un grupo...</td></tr>';
+            return;
+        }
+
+        clasificacionBody.innerHTML = '<tr><td colspan="10" class="vacio">Cargando...</td></tr>';
+
+        try {
+            const response = await fetch(`${API_BASE}/clasificaciones?grupo=${encodeURIComponent(grupo)}`);
+            const tabla = await response.json();
+            if (!response.ok) throw new Error('Error al obtener la tabla de posiciones');
+
+            if (!tabla.length) {
+                clasificacionBody.innerHTML = '<tr><td colspan="10" class="vacio">Sin datos todavía para este grupo.</td></tr>';
+                return;
+            }
+
+            clasificacionBody.innerHTML = '';
+            tabla.forEach((row, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${i + 1}</td>
+                    <td class="equipo-cell">${row.bandera ? row.bandera + ' ' : ''}${row.seleccion}</td>
+                    <td>${row.PJ}</td>
+                    <td>${row.PG}</td>
+                    <td>${row.PE}</td>
+                    <td>${row.PP}</td>
+                    <td>${row.GF}</td>
+                    <td>${row.GC}</td>
+                    <td>${row.DG}</td>
+                    <td><strong>${row.Pts}</strong></td>
+                `;
+                clasificacionBody.appendChild(tr);
+            });
+        } catch (error) {
+            console.error('Error al cargar la clasificación:', error);
+            clasificacionBody.innerHTML = '<tr><td colspan="10" class="vacio">Error al cargar la tabla.</td></tr>';
+        }
+    }
+
+    filtroFase.addEventListener('change', cargarPartidos);
+    filtroGrupo.addEventListener('change', cargarPartidos);
+    filtroClasificacion.addEventListener('change', cargarClasificacion);
+
+    // ---------- Inicio ----------
+    cargarCatalogos().then(cargarPartidos);
+</script>
+
+</body>
+</html>
