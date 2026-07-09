@@ -99,7 +99,7 @@
    CONSUMO DE API: Datos reales desde la Base de Datos MySQL
    ============================================================== */
 
-const API_URL = "http://localhost:3000/api/selecciones";
+const API_URL = "http://localhost:3000/api/confederaciones";
 
 // Elementos del DOM
 const menuConfederaciones = document.getElementById("menu-confederaciones");
@@ -131,7 +131,7 @@ function agruparPorConfederacion(selecciones) {
     
     // 1. Diccionario de banderas 
     const banderasEmoji = {
-        "México": "🎈", "Canadá": "🇨🇦", "Estados Unidos": "🇺🇸", "Panamá": "🇵🇦", "Haití": "🇭🇹", "Curazao": "🇨🇼",
+        "México": "🇲🇽", "Canadá": "🇨🇦", "Estados Unidos": "🇺🇸", "Panamá": "🇵🇦", "Haití": "🇭🇹", "Curazao": "🇨🇼",
         "Argentina": "🇦🇷", "Brasil": "🇧🇷", "Colombia": "🇨🇴", "Ecuador": "🇪🇨", "Paraguay": "🇵🇾", "Uruguay": "🇺🇾",
         "República Checa": "🇨🇿", "Chequia": "🇨🇿", "Suiza": "🇨🇭", "Bosnia y Herzegovina": "🇧🇦", "Escocia": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", 
         "Turquía": "🇹🇷", "Alemania": "🇩🇪", "Países Bajos": "🇳🇱", "Suecia": "🇸🇪", "Bélgica": "🇧🇪", "España": "🇪🇸", 

@@ -24,7 +24,7 @@ const db = mysql.createPool({
 
 // === ENDPOINTS===
 // 1. Obtener todas las selecciones 
-app.get('/api/selecciones', (req, res) => {
+app.get('/api/confederaciones', (req, res) => {
     const query = `
         SELECT 
             s.id_seleccion,
