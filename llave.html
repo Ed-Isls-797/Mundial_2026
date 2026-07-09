@@ -30,20 +30,19 @@
   <div class="content">
 <header>
     <h1>Llave de eliminación directa</h1>
-    <p>Se arma automáticamente con los partidos que ya están cargados en la base de datos</p>
+    <p>Los ganadores de cada partido avanzan automáticamente a la siguiente ronda</p>
 </header>
 
 <main>
     <p class="intro">
-        Esta llave muestra únicamente las fases eliminatorias (a partir de Dieciseisavos de Final).
-        Los partidos que ya tienen equipos y/o resultado cargado en la base de datos se muestran completos;
-        las fases que todavía no tienen partidos programados aparecen marcadas como <strong>pendientes</strong>,
-        en vez de inventar enfrentamientos que aún no se han definido.
+        Esta llave muestra la <strong>progresión real de los ganadores</strong>. 
+        Los equipos que ganan en Dieciseisavos avanzan automáticamente a Octavos.
+        Los partidos pendientes se muestran con <strong>"Por definir"</strong>.
     </p>
 
     <div class="llave-scroll">
         <div class="llave" id="llave-contenedor">
-            <p class="fase-vacia">Cargando la llave...</p>
+            <p class="fase-vacia">⏳ Cargando la llave...</p>
         </div>
     </div>
 </main>
@@ -55,41 +54,292 @@
     const API_BASE = 'http://localhost:3000/api';
     const contenedor = document.getElementById('llave-contenedor');
 
-    async function cargarLlave() {
-        try {
-            const fasesRes = await fetch(`${API_BASE}/fases`);
-            const fases = await fasesRes.json();
-            if (!fasesRes.ok) throw new Error('Error al obtener las fases');
+    // ============================================================
+    //  DATOS DE RESPALDO (por si la API falla)
+    // ============================================================
+    const backupData = {
+        selecciones: [
+            { id_seleccion: 1, nombre: 'México', bandera: '🇲🇽' },
+            { id_seleccion: 2, nombre: 'Sudáfrica', bandera: '🇿🇦' },
+            { id_seleccion: 5, nombre: 'Canadá', bandera: '🇨🇦' },
+            { id_seleccion: 7, nombre: 'Suiza', bandera: '🇨🇭' },
+            { id_seleccion: 8, nombre: 'Bosnia', bandera: '🇧🇦' },
+            { id_seleccion: 9, nombre: 'Brasil', bandera: '🇧🇷' },
+            { id_seleccion: 10, nombre: 'Marruecos', bandera: '🇲🇦' },
+            { id_seleccion: 13, nombre: 'Estados Unidos', bandera: '🇺🇸' },
+            { id_seleccion: 14, nombre: 'Paraguay', bandera: '🇵🇾' },
+            { id_seleccion: 15, nombre: 'Australia', bandera: '🇦🇺' },
+            { id_seleccion: 17, nombre: 'Alemania', bandera: '🇩🇪' },
+            { id_seleccion: 18, nombre: 'Costa de Marfil', bandera: '🇨🇮' },
+            { id_seleccion: 19, nombre: 'Ecuador', bandera: '🇪🇨' },
+            { id_seleccion: 21, nombre: 'Países Bajos', bandera: '🇳🇱' },
+            { id_seleccion: 22, nombre: 'Japón', bandera: '🇯🇵' },
+            { id_seleccion: 23, nombre: 'Suecia', bandera: '🇸🇪' },
+            { id_seleccion: 25, nombre: 'Bélgica', bandera: '🇧🇪' },
+            { id_seleccion: 26, nombre: 'Egipto', bandera: '🇪🇬' },
+            { id_seleccion: 29, nombre: 'España', bandera: '🇪🇸' },
+            { id_seleccion: 30, nombre: 'Cabo Verde', bandera: '🇨🇻' },
+            { id_seleccion: 33, nombre: 'Francia', bandera: '🇫🇷' },
+            { id_seleccion: 34, nombre: 'Senegal', bandera: '🇸🇳' },
+            { id_seleccion: 36, nombre: 'Noruega', bandera: '🇳🇴' },
+            { id_seleccion: 37, nombre: 'Argentina', bandera: '🇦🇷' },
+            { id_seleccion: 38, nombre: 'Argelia', bandera: '🇩🇿' },
+            { id_seleccion: 39, nombre: 'Austria', bandera: '🇦🇹' },
+            { id_seleccion: 41, nombre: 'Portugal', bandera: '🇵🇹' },
+            { id_seleccion: 42, nombre: 'RD Congo', bandera: '🇨🇩' },
+            { id_seleccion: 44, nombre: 'Colombia', bandera: '🇨🇴' },
+            { id_seleccion: 45, nombre: 'Inglaterra', bandera: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
+            { id_seleccion: 46, nombre: 'Croacia', bandera: '🇭🇷' },
+            { id_seleccion: 47, nombre: 'Ghana', bandera: '🇬🇭' }
+        ],
+        fases: [
+            { id_fase: 1, nombre: 'Fase de grupos', orden: 1 },
+            { id_fase: 2, nombre: 'Dieciseisavos de final', orden: 2 },
+            { id_fase: 3, nombre: 'Octavos de final', orden: 3 },
+            { id_fase: 4, nombre: 'Cuartos de final', orden: 4 },
+            { id_fase: 5, nombre: 'Semifinal', orden: 5 },
+            { id_fase: 6, nombre: 'Tercer lugar', orden: 6 },
+            { id_fase: 7, nombre: 'Final', orden: 7 }
+        ],
+        partidos: [
+            { id_partido: 73, id_fase: 2, id_local: 2, id_visitante: 5, goles_local: 0, goles_visitante: 1, penales_local: null, penales_visitante: null, fecha: '2026-06-28 15:00:00', id_estadio: 9 },
+            { id_partido: 74, id_fase: 2, id_local: 9, id_visitante: 22, goles_local: 2, goles_visitante: 1, penales_local: null, penales_visitante: null, fecha: '2026-06-29 13:00:00', id_estadio: 8 },
+            { id_partido: 75, id_fase: 2, id_local: 17, id_visitante: 14, goles_local: 1, goles_visitante: 1, penales_local: 3, penales_visitante: 4, fecha: '2026-06-29 16:30:00', id_estadio: 15 },
+            { id_partido: 76, id_fase: 2, id_local: 21, id_visitante: 10, goles_local: 1, goles_visitante: 1, penales_local: 2, penales_visitante: 3, fecha: '2026-06-29 21:00:00', id_estadio: 3 },
+            { id_partido: 77, id_fase: 2, id_local: 18, id_visitante: 36, goles_local: 1, goles_visitante: 2, penales_local: null, penales_visitante: null, fecha: '2026-06-30 13:00:00', id_estadio: 7 },
+            { id_partido: 78, id_fase: 2, id_local: 33, id_visitante: 23, goles_local: 3, goles_visitante: 0, penales_local: null, penales_visitante: null, fecha: '2026-06-30 17:00:00', id_estadio: 6 },
+            { id_partido: 79, id_fase: 2, id_local: 1, id_visitante: 19, goles_local: 2, goles_visitante: 0, penales_local: null, penales_visitante: null, fecha: '2026-06-30 21:00:00', id_estadio: 1 },
+            { id_partido: 80, id_fase: 2, id_local: 45, id_visitante: 42, goles_local: 2, goles_visitante: 1, penales_local: null, penales_visitante: null, fecha: '2026-07-01 15:00:00', id_estadio: 14 },
+            { id_partido: 81, id_fase: 2, id_local: 25, id_visitante: 34, goles_local: 3, goles_visitante: 2, penales_local: null, penales_visitante: null, fecha: '2026-07-01 19:00:00', id_estadio: 5 },
+            { id_partido: 82, id_fase: 2, id_local: 13, id_visitante: 8, goles_local: 2, goles_visitante: 0, penales_local: null, penales_visitante: null, fecha: '2026-07-01 21:00:00', id_estadio: 11 },
+            { id_partido: 83, id_fase: 2, id_local: 29, id_visitante: 39, goles_local: 3, goles_visitante: 0, penales_local: null, penales_visitante: null, fecha: '2026-07-02 13:00:00', id_estadio: 6 },
+            { id_partido: 84, id_fase: 2, id_local: 41, id_visitante: 46, goles_local: 2, goles_visitante: 1, penales_local: null, penales_visitante: null, fecha: '2026-07-02 17:00:00', id_estadio: 12 },
+            { id_partido: 85, id_fase: 2, id_local: 7, id_visitante: 38, goles_local: 2, goles_visitante: 0, penales_local: null, penales_visitante: null, fecha: '2026-07-02 21:00:00', id_estadio: 4 },
+            { id_partido: 86, id_fase: 2, id_local: 15, id_visitante: 26, goles_local: 1, goles_visitante: 1, penales_local: 2, penales_visitante: 4, fecha: '2026-07-03 15:00:00', id_estadio: 10 },
+            { id_partido: 87, id_fase: 2, id_local: 37, id_visitante: 30, goles_local: 3, goles_visitante: 2, penales_local: null, penales_visitante: null, fecha: '2026-07-03 19:00:00', id_estadio: 13 },
+            { id_partido: 88, id_fase: 2, id_local: 44, id_visitante: 47, goles_local: 1, goles_visitante: 0, penales_local: null, penales_visitante: null, fecha: '2026-07-04 12:00:00', id_estadio: 2 }
+        ]
+    };
 
-            // Solo fases eliminatorias, en orden (se excluye "Fase de grupos")
-            const fasesEliminatorias = fases
-                .filter(f => f.nombre.toLowerCase() !== 'fase de grupos')
-                .sort((a, b) => a.orden - b.orden);
+    // ============================================================
+    //  FUNCIONES
+    // ============================================================
 
-            const partidosPorFase = await Promise.all(
-                fasesEliminatorias.map(f =>
-                    fetch(`${API_BASE}/partidos?fase=${encodeURIComponent(f.nombre)}`).then(r => r.json())
-                )
-            );
-
-            contenedor.innerHTML = '';
-
-            fasesEliminatorias.forEach((fase, i) => {
-                if (i > 0) contenedor.appendChild(crearFlecha());
-                contenedor.appendChild(crearColumnaFase(fase, partidosPorFase[i]));
-            });
-
-        } catch (error) {
-            console.error('Error al cargar la llave:', error);
-            contenedor.innerHTML = '<p class="fase-vacia">No se pudo cargar la llave. ¿El servidor está corriendo?</p>';
+    function obtenerGanador(partido) {
+        if (partido.goles_local === null || partido.goles_visitante === null) return null;
+        
+        if (partido.penales_local !== null && partido.penales_visitante !== null) {
+            if (partido.penales_local > partido.penales_visitante) return partido.id_local;
+            if (partido.penales_visitante > partido.penales_local) return partido.id_visitante;
         }
+        
+        if (partido.goles_local > partido.goles_visitante) return partido.id_local;
+        if (partido.goles_visitante > partido.goles_local) return partido.id_visitante;
+        return null;
     }
 
-    function crearFlecha() {
-        const div = document.createElement('div');
-        div.className = 'flecha-conectora';
-        div.textContent = '→';
-        return div;
+    function obtenerNombre(id, seleccionesMap) {
+        return seleccionesMap[id] ? seleccionesMap[id].nombre : 'Desconocido';
+    }
+
+    function obtenerBandera(id, seleccionesMap) {
+        return seleccionesMap[id] ? seleccionesMap[id].bandera : '';
+    }
+
+    // ============================================================
+    //  CONSTRUIR LLAVE
+    // ============================================================
+
+    function construirLlave(fases, partidos, seleccionesMap) {
+        const fasesEliminatorias = fases.filter(f => f.id_fase >= 2).sort((a, b) => a.orden - b.orden);
+        const llaveConstruida = [];
+
+        // --- FASE 1: DIECISEISAVOS ---
+        const partidosDieciseisavos = partidos.filter(p => p.id_fase === 2);
+        const dieciseisavosProcesados = partidosDieciseisavos.map(p => {
+            const ganador = obtenerGanador(p);
+            return {
+                ...p,
+                local_nombre: obtenerNombre(p.id_local, seleccionesMap),
+                visitante_nombre: obtenerNombre(p.id_visitante, seleccionesMap),
+                local_bandera: obtenerBandera(p.id_local, seleccionesMap),
+                visitante_bandera: obtenerBandera(p.id_visitante, seleccionesMap),
+                ganador: ganador
+            };
+        });
+
+        llaveConstruida.push({
+            fase: fasesEliminatorias.find(f => f.id_fase === 2),
+            partidos: dieciseisavosProcesados
+        });
+
+        // --- FASE 2: OCTAVOS ---
+        let ganadoresAnteriores = dieciseisavosProcesados.map(p => ({
+            id_seleccion: p.ganador,
+            nombre: p.ganador ? obtenerNombre(p.ganador, seleccionesMap) : null,
+            bandera: p.ganador ? obtenerBandera(p.ganador, seleccionesMap) : null
+        }));
+
+        const octavosPartidos = [];
+        for (let i = 0; i < ganadoresAnteriores.length; i += 2) {
+            const g1 = ganadoresAnteriores[i];
+            const g2 = ganadoresAnteriores[i + 1];
+            
+            octavosPartidos.push({
+                id_partido: 1000 + i,
+                id_fase: 3,
+                id_local: g1 ? g1.id_seleccion : null,
+                id_visitante: g2 ? g2.id_seleccion : null,
+                goles_local: null,
+                goles_visitante: null,
+                penales_local: null,
+                penales_visitante: null,
+                fecha: null,
+                id_estadio: null,
+                local_nombre: g1 ? g1.nombre : 'Por definir',
+                visitante_nombre: g2 ? g2.nombre : 'Por definir',
+                local_bandera: g1 ? g1.bandera : null,
+                visitante_bandera: g2 ? g2.bandera : null,
+                ganador: null,
+                es_generado: true
+            });
+        }
+
+        llaveConstruida.push({
+            fase: fasesEliminatorias.find(f => f.id_fase === 3),
+            partidos: octavosPartidos
+        });
+
+        // --- FASE 3: CUARTOS ---
+        ganadoresAnteriores = octavosPartidos.map(p => ({
+            id_seleccion: p.ganador,
+            nombre: p.ganador ? obtenerNombre(p.ganador, seleccionesMap) : null,
+            bandera: p.ganador ? obtenerBandera(p.ganador, seleccionesMap) : null
+        }));
+
+        const cuartosPartidos = [];
+        for (let i = 0; i < ganadoresAnteriores.length; i += 2) {
+            const g1 = ganadoresAnteriores[i];
+            const g2 = ganadoresAnteriores[i + 1];
+            
+            cuartosPartidos.push({
+                id_partido: 2000 + i,
+                id_fase: 4,
+                id_local: g1 ? g1.id_seleccion : null,
+                id_visitante: g2 ? g2.id_seleccion : null,
+                goles_local: null,
+                goles_visitante: null,
+                penales_local: null,
+                penales_visitante: null,
+                fecha: null,
+                id_estadio: null,
+                local_nombre: g1 ? g1.nombre : 'Por definir',
+                visitante_nombre: g2 ? g2.nombre : 'Por definir',
+                local_bandera: g1 ? g1.bandera : null,
+                visitante_bandera: g2 ? g2.bandera : null,
+                ganador: null,
+                es_generado: true
+            });
+        }
+
+        llaveConstruida.push({
+            fase: fasesEliminatorias.find(f => f.id_fase === 4),
+            partidos: cuartosPartidos
+        });
+
+        // --- FASE 4: SEMIFINAL ---
+        ganadoresAnteriores = cuartosPartidos.map(p => ({
+            id_seleccion: p.ganador,
+            nombre: p.ganador ? obtenerNombre(p.ganador, seleccionesMap) : null,
+            bandera: p.ganador ? obtenerBandera(p.ganador, seleccionesMap) : null
+        }));
+
+        const semifinalPartidos = [];
+        for (let i = 0; i < ganadoresAnteriores.length; i += 2) {
+            const g1 = ganadoresAnteriores[i];
+            const g2 = ganadoresAnteriores[i + 1];
+            
+            semifinalPartidos.push({
+                id_partido: 3000 + i,
+                id_fase: 5,
+                id_local: g1 ? g1.id_seleccion : null,
+                id_visitante: g2 ? g2.id_seleccion : null,
+                goles_local: null,
+                goles_visitante: null,
+                penales_local: null,
+                penales_visitante: null,
+                fecha: null,
+                id_estadio: null,
+                local_nombre: g1 ? g1.nombre : 'Por definir',
+                visitante_nombre: g2 ? g2.nombre : 'Por definir',
+                local_bandera: g1 ? g1.bandera : null,
+                visitante_bandera: g2 ? g2.bandera : null,
+                ganador: null,
+                es_generado: true
+            });
+        }
+
+        llaveConstruida.push({
+            fase: fasesEliminatorias.find(f => f.id_fase === 5),
+            partidos: semifinalPartidos
+        });
+
+        // --- FASE 5: FINAL ---
+        ganadoresAnteriores = semifinalPartidos.map(p => ({
+            id_seleccion: p.ganador,
+            nombre: p.ganador ? obtenerNombre(p.ganador, seleccionesMap) : null,
+            bandera: p.ganador ? obtenerBandera(p.ganador, seleccionesMap) : null
+        }));
+
+        const finalPartidos = [];
+        for (let i = 0; i < ganadoresAnteriores.length; i += 2) {
+            const g1 = ganadoresAnteriores[i];
+            const g2 = ganadoresAnteriores[i + 1];
+            
+            finalPartidos.push({
+                id_partido: 4000 + i,
+                id_fase: 7,
+                id_local: g1 ? g1.id_seleccion : null,
+                id_visitante: g2 ? g2.id_seleccion : null,
+                goles_local: null,
+                goles_visitante: null,
+                penales_local: null,
+                penales_visitante: null,
+                fecha: null,
+                id_estadio: null,
+                local_nombre: g1 ? g1.nombre : 'Por definir',
+                visitante_nombre: g2 ? g2.nombre : 'Por definir',
+                local_bandera: g1 ? g1.bandera : null,
+                visitante_bandera: g2 ? g2.bandera : null,
+                ganador: null,
+                es_generado: true
+            });
+        }
+
+        llaveConstruida.push({
+            fase: fasesEliminatorias.find(f => f.id_fase === 7),
+            partidos: finalPartidos
+        });
+
+        return llaveConstruida;
+    }
+
+    // ============================================================
+    //  RENDERIZADO
+    // ============================================================
+
+    function renderizarLlave(llaveConstruida) {
+        contenedor.innerHTML = '';
+
+        llaveConstruida.forEach((item, index) => {
+            if (index > 0) {
+                const flecha = document.createElement('div');
+                flecha.className = 'flecha-conectora';
+                flecha.textContent = '→';
+                contenedor.appendChild(flecha);
+            }
+            contenedor.appendChild(crearColumnaFase(item.fase, item.partidos));
+        });
     }
 
     function crearColumnaFase(fase, partidos) {
@@ -98,13 +348,13 @@
 
         const titulo = document.createElement('div');
         titulo.className = 'fase-titulo';
-        titulo.textContent = fase.nombre;
+        titulo.textContent = fase ? fase.nombre : 'Fase desconocida';
         columna.appendChild(titulo);
 
         const lista = document.createElement('div');
         lista.className = 'fase-partidos';
 
-        if (!partidos.length) {
+        if (!partidos || partidos.length === 0) {
             lista.innerHTML = `
                 <div class="fase-vacia">
                     Aún no hay partidos cargados para esta fase.
@@ -124,6 +374,14 @@
         card.className = 'match-card';
 
         const jugado = p.goles_local !== null && p.goles_visitante !== null;
+        const localNombre = p.local_nombre || 'Por definir';
+        const visitanteNombre = p.visitante_nombre || 'Por definir';
+        const localBandera = p.local_bandera || '';
+        const visitanteBandera = p.visitante_bandera || '';
+
+        const marcadorLocal = jugado ? p.goles_local : '-';
+        const marcadorVisit = jugado ? p.goles_visitante : '-';
+
         const penales = (p.penales_local !== null && p.penales_visitante !== null)
             ? `<div class="match-penales">Penales: ${p.penales_local} - ${p.penales_visitante}</div>`
             : '';
@@ -132,14 +390,17 @@
             ? new Date(p.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })
             : 'Por definir';
 
+        const esPendienteLocal = localNombre === 'Por definir' || localNombre === 'Desconocido';
+        const esPendienteVisitante = visitanteNombre === 'Por definir' || visitanteNombre === 'Desconocido';
+
         card.innerHTML = `
-            <div class="match-equipo${jugado ? '' : ' pendiente'}">
-                <span class="nombre">${p.bandera_local ? p.bandera_local + ' ' : ''}${p.local}</span>
-                <span class="marcador">${jugado ? p.goles_local : '-'}</span>
+            <div class="match-equipo${esPendienteLocal ? ' pendiente' : ''}">
+                <span class="nombre">${localBandera ? localBandera + ' ' : ''}${localNombre}</span>
+                <span class="marcador">${marcadorLocal}</span>
             </div>
-            <div class="match-equipo${jugado ? '' : ' pendiente'}">
-                <span class="nombre">${p.bandera_visitante ? p.bandera_visitante + ' ' : ''}${p.visitante}</span>
-                <span class="marcador">${jugado ? p.goles_visitante : '-'}</span>
+            <div class="match-equipo${esPendienteVisitante ? ' pendiente' : ''}">
+                <span class="nombre">${visitanteBandera ? visitanteBandera + ' ' : ''}${visitanteNombre}</span>
+                <span class="marcador">${marcadorVisit}</span>
             </div>
             ${penales}
             <div class="match-meta">${fechaTexto}${p.estadio ? ' · ' + p.estadio : ''}</div>
@@ -148,7 +409,80 @@
         return card;
     }
 
-    cargarLlave();
+    // ============================================================
+    //  CARGAR DATOS (con respaldo)
+    // ============================================================
+
+    async function cargarDatos() {
+        try {
+            console.log('🔄 Intentando conectar con la API...');
+            
+            // Intentar obtener datos de la API
+            const [fasesRes, partidosRes, seleccionesRes] = await Promise.all([
+                fetch(`${API_BASE}/fases`),
+                fetch(`${API_BASE}/partidos`),
+                fetch(`${API_BASE}/selecciones`)
+            ]);
+
+            if (!fasesRes.ok || !partidosRes.ok || !seleccionesRes.ok) {
+                console.warn('⚠️ La API no respondió correctamente. Usando datos de respaldo.');
+                usarDatosRespaldo();
+                return;
+            }
+
+            const fases = await fasesRes.json();
+            const partidos = await partidosRes.json();
+            const selecciones = await seleccionesRes.json();
+
+            console.log('✅ Datos obtenidos de la API:');
+            console.log(`   - ${fases.length} fases`);
+            console.log(`   - ${partidos.length} partidos`);
+            console.log(`   - ${selecciones.length} selecciones`);
+
+            // Verificar que hay partidos de dieciseisavos
+            const partidosDieciseisavos = partidos.filter(p => p.id_fase === 2);
+            console.log(`   - ${partidosDieciseisavos.length} partidos en Dieciseisavos`);
+
+            if (partidosDieciseisavos.length === 0) {
+                console.warn('⚠️ No hay partidos de Dieciseisavos en la API. Usando respaldo.');
+                usarDatosRespaldo();
+                return;
+            }
+
+            // Construir mapa de selecciones
+            const seleccionesMap = {};
+            selecciones.forEach(s => {
+                seleccionesMap[s.id_seleccion] = s;
+            });
+
+            // Construir y renderizar la llave
+            const llave = construirLlave(fases, partidos, seleccionesMap);
+            renderizarLlave(llave);
+
+        } catch (error) {
+            console.error('❌ Error al conectar con la API:', error);
+            console.log('📦 Usando datos de respaldo...');
+            usarDatosRespaldo();
+        }
+    }
+
+    function usarDatosRespaldo() {
+        console.log('📦 Usando datos de respaldo (hardcodeados)');
+        
+        const seleccionesMap = {};
+        backupData.selecciones.forEach(s => {
+            seleccionesMap[s.id_seleccion] = s;
+        });
+
+        const llave = construirLlave(backupData.fases, backupData.partidos, seleccionesMap);
+        renderizarLlave(llave);
+    }
+
+    // ============================================================
+    //  INICIAR
+    // ============================================================
+
+    cargarDatos();
 </script>
 
 </body>
