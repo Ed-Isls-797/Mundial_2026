@@ -24,7 +24,7 @@ const db = mysql.createPool({
 
 // === ENDPOINTS===
 // 1. Obtener todas las selecciones 
-app.get('/api/selecciones', (req, res) => {
+app.get('/api/confederaciones', (req, res) => {
     const query = `
         SELECT 
             s.id_seleccion,
@@ -50,6 +50,130 @@ app.get('/api/selecciones', (req, res) => {
             return res.status(500).json({ error: 'Error al obtener las selecciones' });
         }
         res.json(results);
+    });
+});
+
+// 1b. Obtener selecciones con datos completos para la vista de selección/modal
+function mapSeleccionToResponse(seleccion) {
+    const textoMapa = seleccion.estadio && seleccion.estadio !== 'Por definir'
+        ? `${seleccion.nombre} ${seleccion.estadio}`
+        : seleccion.nombre;
+
+    const googleMapsUrl = seleccion.estadio_latitud != null && seleccion.estadio_longitud != null
+        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(textoMapa)}`
+        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(textoMapa)}`;
+
+    return {
+        id_seleccion: seleccion.id_seleccion,
+        nombre: seleccion.nombre,
+        bandera: seleccion.bandera,
+        ranking: seleccion.ranking,
+        historia: seleccion.historia,
+        ventajas: seleccion.ventajas,
+        desventajas: seleccion.desventajas,
+        entrenador: seleccion.entrenador,
+        grupo: seleccion.grupo || 'Sin asignar',
+        estadio: seleccion.estadio || 'Por definir',
+        google_maps_url: googleMapsUrl
+    };
+}
+
+app.get('/api/selecciones', (req, res) => {
+    const query = `
+        SELECT
+            s.id_seleccion,
+            s.nombre,
+            s.entrenador,
+            s.historia,
+            s.ventajas,
+            s.desventajas,
+            s.ranking,
+            s.bandera,
+            g.nombre AS grupo,
+            COALESCE(MAX(e.nombre), 'Por definir') AS estadio,
+            MAX(e.latitud) AS estadio_latitud,
+            MAX(e.longitud) AS estadio_longitud
+        FROM selecciones s
+        LEFT JOIN grupo_selecciones gs ON s.id_seleccion = gs.id_seleccion
+        LEFT JOIN grupos g ON gs.id_grupo = g.id_grupo
+        LEFT JOIN (
+            SELECT id_local AS id_seleccion, id_estadio FROM partidos
+            UNION ALL
+            SELECT id_visitante AS id_seleccion, id_estadio FROM partidos
+        ) p ON p.id_seleccion = s.id_seleccion
+        LEFT JOIN estadios e ON e.id_estadio = p.id_estadio
+        GROUP BY
+            s.id_seleccion,
+            s.nombre,
+            s.entrenador,
+            s.historia,
+            s.ventajas,
+            s.desventajas,
+            s.ranking,
+            s.bandera,
+            g.nombre
+        ORDER BY s.nombre
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error en la consulta:', err);
+            return res.status(500).json({ error: 'Error al obtener las selecciones' });
+        }
+
+        res.json(results.map(mapSeleccionToResponse));
+    });
+});
+
+app.get('/api/selecciones/:id', (req, res) => {
+    const { id } = req.params;
+    const query = `
+        SELECT
+            s.id_seleccion,
+            s.nombre,
+            s.entrenador,
+            s.historia,
+            s.ventajas,
+            s.desventajas,
+            s.ranking,
+            s.bandera,
+            g.nombre AS grupo,
+            COALESCE(MAX(e.nombre), 'Por definir') AS estadio,
+            MAX(e.latitud) AS estadio_latitud,
+            MAX(e.longitud) AS estadio_longitud
+        FROM selecciones s
+        LEFT JOIN grupo_selecciones gs ON s.id_seleccion = gs.id_seleccion
+        LEFT JOIN grupos g ON gs.id_grupo = g.id_grupo
+        LEFT JOIN (
+            SELECT id_local AS id_seleccion, id_estadio FROM partidos
+            UNION ALL
+            SELECT id_visitante AS id_seleccion, id_estadio FROM partidos
+        ) p ON p.id_seleccion = s.id_seleccion
+        LEFT JOIN estadios e ON e.id_estadio = p.id_estadio
+        WHERE s.id_seleccion = ?
+        GROUP BY
+            s.id_seleccion,
+            s.nombre,
+            s.entrenador,
+            s.historia,
+            s.ventajas,
+            s.desventajas,
+            s.ranking,
+            s.bandera,
+            g.nombre
+    `;
+
+    db.query(query, [id], (err, results) => {
+        if (err) {
+            console.error('Error en la consulta:', err);
+            return res.status(500).json({ error: 'Error al obtener la selección' });
+        }
+
+        if (!results.length) {
+            return res.status(404).json({ error: 'Selección no encontrada' });
+        }
+
+        res.json(mapSeleccionToResponse(results[0]));
     });
 });
 
