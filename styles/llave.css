@@ -1,0 +1,194 @@
+:root {
+    --verde-cancha: #0b6e4f;
+    --verde-oscuro: #084c37;
+    --dorado: #d4af37;
+    --gris-claro: #f4f4f4;
+    --gris-medio: #e0e0e0;
+    --texto: #222;
+    --texto-suave: #555;
+    --blanco: #ffffff;
+    --sombra: rgba(0, 0, 0, 0.15);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background-color: var(--gris-claro);
+    color: var(--texto);
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background: linear-gradient(135deg, var(--verde-oscuro), var(--verde-cancha));
+    color: var(--blanco);
+    padding: 30px 20px;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2.2rem;
+    letter-spacing: 1px;
+}
+
+header p {
+    margin: 8px 0 0;
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+main {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 25px 20px 60px;
+}
+
+p.intro {
+    line-height: 1.6;
+    color: var(--texto-suave);
+    margin-bottom: 24px;
+}
+
+/* -------- Llave: columnas por fase -------- */
+.llave-scroll {
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+.llave {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    min-width: max-content;
+}
+
+.fase-columna {
+    display: flex;
+    flex-direction: column;
+    min-width: 240px;
+    max-width: 260px;
+    padding: 0 14px;
+}
+
+.fase-titulo {
+    color: var(--verde-oscuro);
+    font-size: 0.95rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    border-bottom: 3px solid var(--dorado);
+}
+
+.fase-partidos {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 16px;
+    flex: 1;
+}
+
+/* Flecha conectora entre columnas de fase */
+.flecha-conectora {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dorado);
+    font-size: 1.4rem;
+    font-weight: 700;
+    min-width: 30px;
+}
+
+/* -------- Tarjeta de partido -------- */
+.match-card {
+    background: var(--blanco);
+    border: 1px solid var(--gris-medio);
+    border-radius: 10px;
+    padding: 10px 12px;
+    box-shadow: 0 3px 8px var(--sombra);
+}
+
+.match-equipo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 5px 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.match-equipo:first-child {
+    border-bottom: 1px solid var(--gris-medio);
+}
+
+.match-equipo .nombre {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.match-equipo .marcador {
+    font-weight: 800;
+    color: var(--verde-cancha);
+    min-width: 18px;
+    text-align: center;
+}
+
+.match-equipo.pendiente .nombre {
+    color: var(--texto-suave);
+    font-weight: 400;
+    font-style: italic;
+}
+
+.match-penales {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--texto-suave);
+    margin-top: 4px;
+}
+
+.match-meta {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--texto-suave);
+    margin-top: 6px;
+    border-top: 1px dashed var(--gris-medio);
+    padding-top: 5px;
+}
+
+/* -------- Estado vacío de una fase -------- */
+.fase-vacia {
+    background: var(--blanco);
+    border: 1px dashed var(--gris-medio);
+    border-radius: 10px;
+    padding: 18px 12px;
+    text-align: center;
+    color: var(--texto-suave);
+    font-size: 0.85rem;
+    margin: auto 0;
+}
+
+.badge-pendiente {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: rgba(212, 175, 55, 0.18);
+    color: #8a6d1a;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+@media (max-width: 700px) {
+    header h1 {
+        font-size: 1.6rem;
+    }
+}

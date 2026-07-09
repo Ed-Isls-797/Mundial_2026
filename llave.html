@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Llave - Mundial 2026</title>
+<link rel="stylesheet" href="styles/sidebar.css">
+<link rel="stylesheet" href="styles/llave.css">
+</head>
+<body>
+<div class="page">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">26</div>
+      <div class="brand-name">Mundial<small>2026</small></div>
+    </div>
+    <nav class="mainnav">
+      <ul>
+        <li><a href="confederaciones.html">Confederaciones</a></li>
+        <li><a href="selecciones.html">Selecciones</a></li>
+        <li><a href="grupos.html">Grupos</a></li>
+        <li><a href="calendario.html">Calendario</a></li>
+        <li><a href="resultados.html">Resultados</a></li>
+        <li><a href="llave.html" class="active">Llave</a></li>
+      </ul>
+    </nav>
+    <a href="index.html" class="home-link">Home</a>
+  </aside>
+
+  <div class="content">
+<header>
+    <h1>Llave de eliminación directa</h1>
+    <p>Se arma automáticamente con los partidos que ya están cargados en la base de datos</p>
+</header>
+
+<main>
+    <p class="intro">
+        Esta llave muestra únicamente las fases eliminatorias (a partir de Dieciseisavos de Final).
+        Los partidos que ya tienen equipos y/o resultado cargado en la base de datos se muestran completos;
+        las fases que todavía no tienen partidos programados aparecen marcadas como <strong>pendientes</strong>,
+        en vez de inventar enfrentamientos que aún no se han definido.
+    </p>
+
+    <div class="llave-scroll">
+        <div class="llave" id="llave-contenedor">
+            <p class="fase-vacia">Cargando la llave...</p>
+        </div>
+    </div>
+</main>
+
+  </div>
+</div>
+
+<script>
+    const API_BASE = 'http://localhost:3000/api';
+    const contenedor = document.getElementById('llave-contenedor');
+
+    async function cargarLlave() {
+        try {
+            const fasesRes = await fetch(`${API_BASE}/fases`);
+            const fases = await fasesRes.json();
+            if (!fasesRes.ok) throw new Error('Error al obtener las fases');
+
+            // Solo fases eliminatorias, en orden (se excluye "Fase de grupos")
+            const fasesEliminatorias = fases
+                .filter(f => f.nombre.toLowerCase() !== 'fase de grupos')
+                .sort((a, b) => a.orden - b.orden);
+
+            const partidosPorFase = await Promise.all(
+                fasesEliminatorias.map(f =>
+                    fetch(`${API_BASE}/partidos?fase=${encodeURIComponent(f.nombre)}`).then(r => r.json())
+                )
+            );
+
+            contenedor.innerHTML = '';
+
+            fasesEliminatorias.forEach((fase, i) => {
+                if (i > 0) contenedor.appendChild(crearFlecha());
+                contenedor.appendChild(crearColumnaFase(fase, partidosPorFase[i]));
+            });
+
+        } catch (error) {
+            console.error('Error al cargar la llave:', error);
+            contenedor.innerHTML = '<p class="fase-vacia">No se pudo cargar la llave. ¿El servidor está corriendo?</p>';
+        }
+    }
+
+    function crearFlecha() {
+        const div = document.createElement('div');
+        div.className = 'flecha-conectora';
+        div.textContent = '→';
+        return div;
+    }
+
+    function crearColumnaFase(fase, partidos) {
+        const columna = document.createElement('div');
+        columna.className = 'fase-columna';
+
+        const titulo = document.createElement('div');
+        titulo.className = 'fase-titulo';
+        titulo.textContent = fase.nombre;
+        columna.appendChild(titulo);
+
+        const lista = document.createElement('div');
+        lista.className = 'fase-partidos';
+
+        if (!partidos.length) {
+            lista.innerHTML = `
+                <div class="fase-vacia">
+                    Aún no hay partidos cargados para esta fase.
+                    <div><span class="badge-pendiente">Pendiente</span></div>
+                </div>
+            `;
+        } else {
+            partidos.forEach(p => lista.appendChild(crearMatchCard(p)));
+        }
+
+        columna.appendChild(lista);
+        return columna;
+    }
+
+    function crearMatchCard(p) {
+        const card = document.createElement('div');
+        card.className = 'match-card';
+
+        const jugado = p.goles_local !== null && p.goles_visitante !== null;
+        const penales = (p.penales_local !== null && p.penales_visitante !== null)
+            ? `<div class="match-penales">Penales: ${p.penales_local} - ${p.penales_visitante}</div>`
+            : '';
+
+        const fechaTexto = p.fecha
+            ? new Date(p.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })
+            : 'Por definir';
+
+        card.innerHTML = `
+            <div class="match-equipo${jugado ? '' : ' pendiente'}">
+                <span class="nombre">${p.bandera_local ? p.bandera_local + ' ' : ''}${p.local}</span>
+                <span class="marcador">${jugado ? p.goles_local : '-'}</span>
+            </div>
+            <div class="match-equipo${jugado ? '' : ' pendiente'}">
+                <span class="nombre">${p.bandera_visitante ? p.bandera_visitante + ' ' : ''}${p.visitante}</span>
+                <span class="marcador">${jugado ? p.goles_visitante : '-'}</span>
+            </div>
+            ${penales}
+            <div class="match-meta">${fechaTexto}${p.estadio ? ' · ' + p.estadio : ''}</div>
+        `;
+
+        return card;
+    }
+
+    cargarLlave();
+</script>
+
+</body>
+</html>
