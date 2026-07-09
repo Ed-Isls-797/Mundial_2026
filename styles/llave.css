@@ -1,62 +1,99 @@
 :root {
-    --verde-cancha: #0b6e4f;
-    --verde-oscuro: #084c37;
-    --dorado: #d4af37;
-    --gris-claro: #f4f4f4;
-    --gris-medio: #e0e0e0;
-    --texto: #222;
-    --texto-suave: #555;
-    --blanco: #ffffff;
-    --sombra: rgba(0, 0, 0, 0.15);
+    --navy: #0a1a3c;
+    --blue-deep: #123a7a;
+    --blue: #1f5fd1;
+    --gold: #d4af37;
+    --gold-light: #f0d98c;
+    --white: #ffffff;
+    --gris-fondo: #f8f9fa;
+    --gris-borde: #e2e8f0;
+    --texto: #0a1a3c;
+    --texto-suave: #4a5568;
+    --sombra: rgba(10, 26, 60, 0.08);
 }
 
 * {
     box-sizing: border-box;
-}
-
-body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    background-color: var(--gris-claro);
-    color: var(--texto);
     margin: 0;
     padding: 0;
 }
 
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: var(--gris-fondo);
+    color: var(--texto);
+    line-height: 1.5;
+}
+
+/* -------- Header (Mantiene la consistencia) -------- */
 header {
-    background: linear-gradient(135deg, var(--verde-oscuro), var(--verde-cancha));
-    color: var(--blanco);
-    padding: 30px 20px;
+    background: radial-gradient(circle at 80% 20%, var(--blue-deep) 0%, var(--navy) 60%, #061027 100%);
+    color: var(--white);
+    padding: 50px 20px;
     text-align: center;
+    position: relative;
+    border-bottom: 4px solid var(--gold);
+}
+
+header::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+        repeating-linear-gradient(0deg, rgba(212,175,55,0.03) 0 1px, transparent 1px 40px),
+        repeating-linear-gradient(90deg, rgba(212,175,55,0.03) 0 1px, transparent 1px 40px);
+    pointer-events: none;
 }
 
 header h1 {
-    margin: 0;
-    font-size: 2.2rem;
+    font-family: 'Anton', Arial, sans-serif;
+    font-size: clamp(2rem, 4vw, 2.8rem);
     letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
 }
 
 header p {
-    margin: 8px 0 0;
     font-size: 1rem;
-    opacity: 0.9;
+    color: var(--gold-light);
+    font-weight: 500;
+    opacity: 0.95;
 }
 
+/* -------- Contenedor Principal (Más ancho para llaves) -------- */
 main {
     max-width: 1500px;
     margin: 0 auto;
-    padding: 25px 20px 60px;
+    padding: 40px 20px 80px;
 }
 
 p.intro {
-    line-height: 1.6;
+    font-size: 1rem;
     color: var(--texto-suave);
-    margin-bottom: 24px;
+    margin-bottom: 30px;
 }
 
-/* -------- Llave: columnas por fase -------- */
+/* -------- Llave: Columnas por fase -------- */
 .llave-scroll {
     overflow-x: auto;
-    padding-bottom: 10px;
+    padding: 10px 0 24px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--blue) transparent;
+}
+
+/* Estilos de scrollbar para navegadores basados en Blink (Chrome, Safari, Edge) */
+.llave-scroll::-webkit-scrollbar {
+    height: 8px;
+}
+.llave-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.llave-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(31, 95, 209, 0.3);
+    border-radius: 20px;
+}
+.llave-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: var(--blue);
 }
 
 .llave {
@@ -64,33 +101,34 @@ p.intro {
     align-items: stretch;
     gap: 0;
     min-width: max-content;
+    padding: 10px;
 }
 
 .fase-columna {
     display: flex;
     flex-direction: column;
-    min-width: 240px;
-    max-width: 260px;
-    padding: 0 14px;
+    min-width: 260px;
+    max-width: 280px;
+    padding: 0 16px;
 }
 
 .fase-titulo {
-    color: var(--verde-oscuro);
-    font-size: 0.95rem;
-    font-weight: 800;
-    text-transform: uppercase;
+    font-family: 'Anton', Arial, sans-serif;
+    color: var(--navy);
+    font-size: 1.1rem;
     letter-spacing: 0.5px;
+    text-transform: uppercase;
     text-align: center;
     padding-bottom: 8px;
-    margin-bottom: 16px;
-    border-bottom: 3px solid var(--dorado);
+    margin-bottom: 24px;
+    border-bottom: 3px solid var(--gold);
 }
 
 .fase-partidos {
     display: flex;
     flex-direction: column;
     justify-content: space-around;
-    gap: 16px;
+    gap: 20px;
     flex: 1;
 }
 
@@ -99,33 +137,41 @@ p.intro {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--dorado);
-    font-size: 1.4rem;
+    color: var(--gold);
+    font-size: 1.5rem;
     font-weight: 700;
-    min-width: 30px;
+    min-width: 36px;
+    opacity: 0.8;
 }
 
-/* -------- Tarjeta de partido -------- */
+/* -------- Tarjeta de partido (Estilo Bracket Pro) -------- */
 .match-card {
-    background: var(--blanco);
-    border: 1px solid var(--gris-medio);
+    background: var(--white);
+    border: 1px solid var(--gris-borde);
     border-radius: 10px;
-    padding: 10px 12px;
-    box-shadow: 0 3px 8px var(--sombra);
+    padding: 12px 14px;
+    box-shadow: 0 6px 15px var(--sombra);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.match-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(31, 95, 209, 0.4);
 }
 
 .match-equipo {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    padding: 5px 0;
+    gap: 12px;
+    padding: 8px 0;
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 700;
+    color: var(--navy);
 }
 
 .match-equipo:first-child {
-    border-bottom: 1px solid var(--gris-medio);
+    border-bottom: 1px solid var(--gris-borde);
 }
 
 .match-equipo .nombre {
@@ -134,61 +180,78 @@ p.intro {
     white-space: nowrap;
 }
 
+/* El marcador resalta con el azul vibrante */
 .match-equipo .marcador {
     font-weight: 800;
-    color: var(--verde-cancha);
-    min-width: 18px;
+    color: var(--blue);
+    font-size: 1rem;
+    min-width: 20px;
     text-align: center;
 }
 
+/* Estilo discreto para equipos que aún no se definen */
 .match-equipo.pendiente .nombre {
     color: var(--texto-suave);
-    font-weight: 400;
+    font-weight: 500;
     font-style: italic;
+    opacity: 0.7;
 }
 
 .match-penales {
     text-align: center;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
+    font-weight: 600;
     color: var(--texto-suave);
-    margin-top: 4px;
+    background: var(--gris-fondo);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-top: 6px;
 }
 
 .match-meta {
     text-align: center;
-    font-size: 0.72rem;
+    font-size: 0.75rem;
+    font-weight: 500;
     color: var(--texto-suave);
-    margin-top: 6px;
-    border-top: 1px dashed var(--gris-medio);
-    padding-top: 5px;
+    margin-top: 8px;
+    border-top: 1px dashed var(--gris-borde);
+    padding-top: 6px;
 }
 
 /* -------- Estado vacío de una fase -------- */
 .fase-vacia {
-    background: var(--blanco);
-    border: 1px dashed var(--gris-medio);
+    background: var(--white);
+    border: 1px dashed var(--gris-borde);
     border-radius: 10px;
-    padding: 18px 12px;
+    padding: 24px 16px;
     text-align: center;
     color: var(--texto-suave);
     font-size: 0.85rem;
     margin: auto 0;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
 }
 
+/* Badge estilizado para indicar "Esperando Rivales" */
 .badge-pendiente {
     display: inline-block;
-    margin-top: 8px;
-    padding: 2px 10px;
-    border-radius: 999px;
-    background: rgba(212, 175, 55, 0.18);
-    color: #8a6d1a;
+    margin-top: 10px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    background: rgba(214, 175, 55, 0.15);
+    color: #977300;
     font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-@media (max-width: 700px) {
-    header h1 {
-        font-size: 1.6rem;
+/* -------- Responsive -------- */
+@media (max-width: 768px) {
+    header {
+        padding: 40px 16px;
+    }
+    
+    main {
+        padding: 20px 16px 40px;
     }
 }

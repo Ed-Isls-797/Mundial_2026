@@ -149,6 +149,7 @@
     }
 
     // ---------- Listar partidos ----------
+    // ---------- Listar partidos con Separadores de Fase ----------
     async function cargarPartidos() {
         tablaBody.innerHTML = '<tr><td colspan="9" class="vacio">Cargando partidos...</td></tr>';
 
@@ -167,14 +168,29 @@
             }
 
             tablaBody.innerHTML = '';
-            partidos.forEach(p => tablaBody.appendChild(crearFila(p)));
+            
+            let ultimaFaseVista = null;
+
+            partidos.forEach(p => {
+                // SI CAMBIA LA FASE (o es la primera), metemos una fila divisoria elegante
+                if (p.fase !== ultimaFaseVista) {
+                    const filaSeparadora = document.createElement('tr');
+                    filaSeparadora.className = 'fase-separador';
+                    filaSeparadora.innerHTML = `<td colspan="9">⚽ ${p.fase}</td>`;
+                    tablaBody.appendChild(filaSeparadora);
+                    
+                    ultimaFaseVista = p.fase;
+                }
+
+                // Insertamos el renglón normal del partido
+                tablaBody.appendChild(crearFila(p));
+            });
 
         } catch (error) {
             console.error('Error al cargar partidos:', error);
             tablaBody.innerHTML = '<tr><td colspan="9" class="vacio">Error al cargar los partidos.</td></tr>';
         }
     }
-
     function crearFila(p) {
         const tr = document.createElement('tr');
 
