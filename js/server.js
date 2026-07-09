@@ -180,14 +180,14 @@ app.get('/api/selecciones/:id', (req, res) => {
 //2.mostrar grupos
 app.get('/api/grupos', (req, res) => {
     const query = `
-        SELECT 
-            g.nombre AS nombre_grupo,
-            s.nombre AS nombre_seleccion
-        FROM grupos g
-        INNER JOIN grupo_selecciones gs ON g.id_grupo = gs.id_grupo
-        INNER JOIN selecciones s ON gs.id_seleccion = s.id_seleccion
-        ORDER BY g.nombre, s.ranking
-    `;
+       SELECT 
+    gs.id_grupo,
+    g.nombre AS nombre_grupo,
+    gs.id_seleccion,
+    s.nombre AS nombre_seleccion
+FROM grupo_selecciones gs
+LEFT JOIN grupos g ON gs.id_grupo = g.id_grupo
+LEFT JOIN selecciones s ON gs.id_seleccion = s.id_seleccion`;
 
     db.query(query, (err, results) => {
         if (err) {
