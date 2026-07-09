@@ -6,6 +6,8 @@
 <title>Selecciones | Mundial 2026</title>
 <link rel="stylesheet" href="styles/sidebar.css">
 <link rel="stylesheet" href="styles/selecciones.css">
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 </head>
 <body>
 <div class="page">
@@ -105,10 +107,236 @@
         </div>
       </div>
 
-      <a id="modalMapLink" href="#" target="_blank" rel="noopener" class="map-btn">
-        📍 Ver estadio en Google Maps
-      </a>
+      <!-- Mapa de Leaflet -->
+      <div class="modal-section">
+        <h4>Ubicación del estadio</h4>
+        <div id="mapContainer" style="width: 100%; height: 300px; border-radius: 8px; overflow: hidden; margin-top: 10px;"></div>
+      </div>
+
+      <button id="modalMapLink" class="map-btn" style="width: 100%; padding: 12px; margin-top: 15px;">
+        📍 Ver en OpenStreetMap
+      </button>
     </div>
   </div>
 </body>
+
+<!-- Leaflet JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script>
+const API_BASE = 'http://localhost:3000/api';
+let allTeams = [];
+let currentTeam = null;
+let map = null;
+
+// Cargar datos del API
+async function loadTeams() {
+  try {
+    const response = await fetch(`${API_BASE}/selecciones`);
+    if (!response.ok) throw new Error('Error al cargar las selecciones');
+    allTeams = await response.json();
+    renderTeams(allTeams);
+    loadGroups();
+  } catch (error) {
+    console.error('Error:', error);
+    document.getElementById('teamsGrid').innerHTML = '<p class="error">No se pudieron cargar los datos.</p>';
+  }
+}
+
+// Renderizar tarjetas de equipos
+function renderTeams(teams) {
+  const grid = document.getElementById('teamsGrid');
+  grid.innerHTML = '';
+  
+  if (teams.length === 0) {
+    grid.innerHTML = '<p class="no-results">No hay selecciones para mostrar.</p>';
+    return;
+  }
+
+  teams.forEach(team => {
+    const card = document.createElement('div');
+    card.className = 'team-card';
+    card.innerHTML = `
+      <div class="team-card-header">
+        <span class="team-flag">${team.bandera || '🏳️'}</span>
+        <h3>${team.nombre}</h3>
+      </div>
+      <div class="team-card-info">
+        <p><strong>Ranking:</strong> ${team.ranking || 'N/A'}</p>
+        <p><strong>Grupo:</strong> ${team.grupo}</p>
+        <p><strong>Entrenador:</strong> ${team.entrenador}</p>
+      </div>
+    `;
+    card.addEventListener('click', () => showTeamModal(team));
+    grid.appendChild(card);
+  });
+}
+
+// Cargar grupos para el filtro
+async function loadGroups() {
+  const groupFilter = document.getElementById('groupFilter');
+  const groups = [...new Set(allTeams.map(t => t.grupo))].sort();
+  
+  groups.forEach(group => {
+    if (group !== 'Sin asignar') {
+      const option = document.createElement('option');
+      option.value = group;
+      option.textContent = `Grupo ${group}`;
+      groupFilter.appendChild(option);
+    }
+  });
+}
+
+// Mostrar modal con detalles del equipo
+function showTeamModal(team) {
+  currentTeam = team;
+  
+  document.getElementById('modalFlag').textContent = team.bandera || '🏳️';
+  document.getElementById('modalTeamName').textContent = team.nombre;
+  document.getElementById('modalGroupBadge').textContent = `Grupo ${team.grupo}`;
+  document.getElementById('modalRanking').textContent = team.ranking || 'N/A';
+  document.getElementById('modalCoach').textContent = team.entrenador;
+  document.getElementById('modalGroup').textContent = team.grupo;
+  document.getElementById('modalStadium').textContent = team.estadio;
+  
+  document.getElementById('modalHistory').textContent = team.historia || 'Sin información';
+  
+  // Ventajas y desventajas
+  const prosList = document.getElementById('modalPros');
+  const consList = document.getElementById('modalCons');
+  prosList.innerHTML = '';
+  consList.innerHTML = '';
+  
+  if (team.ventajas) {
+    team.ventajas.split(',').forEach(v => {
+      const li = document.createElement('li');
+      li.textContent = v.trim();
+      prosList.appendChild(li);
+    });
+  }
+  
+  if (team.desventajas) {
+    team.desventajas.split(',').forEach(d => {
+      const li = document.createElement('li');
+      li.textContent = d.trim();
+      consList.appendChild(li);
+    });
+  }
+
+  // Inicializar mapa
+  initializeMap(team);
+  
+  // Mostrar modal
+  document.getElementById('teamModal').style.display = 'flex';
+}
+
+// Inicializar mapa de Leaflet
+function initializeMap(team) {
+  setTimeout(() => {
+    const mapContainer = document.getElementById('mapContainer');
+    
+    if (map) {
+      map.remove();
+    }
+
+    // Coordenadas por defecto (América del Norte - sede del Mundial 2026)
+    let lat = 25.0;
+    let lng = -100.0;
+    let zoom = 3;
+
+    // Búsqueda aproximada de estadios conocidos
+    const estadioCoords = {
+      'Estadio Azteca': { lat: 19.3043, lng: -99.1609 },
+      'Estadio Akron': { lat: 20.5937, lng: -103.4050 },
+      'Estadio de Guadalajara': { lat: 20.5937, lng: -103.4050 },
+      'NRG Stadium': { lat: 29.6849, lng: -95.4107 },
+      'SoFi Stadium': { lat: 33.9533, lng: -118.3394 },
+      'Levi\'s Stadium': { lat: 37.4050, lng: -121.9716 },
+      'Hard Rock Stadium': { lat: 26.0815, lng: -80.2395 },
+      'MetLife Stadium': { lat: 40.8135, lng: -74.0745 },
+      'Arrowhead Stadium': { lat: 39.0489, lng: -94.4852 },
+      'Lincoln Financial Field': { lat: 39.9012, lng: -75.1672 },
+      'Mercedes-Benz Stadium': { lat: 33.7490, lng: -84.3880 },
+      'Gillette Stadium': { lat: 42.0909, lng: -71.2643 },
+      'BMO Field': { lat: 43.6324, lng: -79.4189 }
+    };
+
+    // Buscar coordenadas del estadio
+    for (const [stadium, coords] of Object.entries(estadioCoords)) {
+      if (team.estadio && team.estadio.toLowerCase().includes(stadium.toLowerCase())) {
+        lat = coords.lat;
+        lng = coords.lng;
+        zoom = 12;
+        break;
+      }
+    }
+
+    // Crear mapa
+    map = L.map(mapContainer).setView([lat, lng], zoom);
+
+    // Agregar capa de OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    // Agregar marcador
+    if (team.estadio && team.estadio !== 'Por definir') {
+      L.marker([lat, lng]).addTo(map).bindPopup(`<strong>${team.nombre}</strong><br>${team.estadio}`);
+    }
+  }, 100);
+}
+
+// Cerrar modal
+document.getElementById('modalClose').addEventListener('click', () => {
+  document.getElementById('teamModal').style.display = 'none';
+  if (map) {
+    map.remove();
+    map = null;
+  }
+});
+
+// Cerrar modal al hacer clic afuera
+document.getElementById('teamModal').addEventListener('click', (e) => {
+  if (e.target.id === 'teamModal') {
+    document.getElementById('teamModal').style.display = 'none';
+    if (map) {
+      map.remove();
+      map = null;
+    }
+  }
+});
+
+// Botón para abrir en OpenStreetMap
+document.getElementById('modalMapLink').addEventListener('click', () => {
+  if (currentTeam) {
+    const query = `${currentTeam.nombre} ${currentTeam.estadio}`;
+    const osmUrl = `https://www.openstreetmap.org/search?query=${encodeURIComponent(query)}`;
+    window.open(osmUrl, '_blank');
+  }
+});
+
+// Filtrar por búsqueda
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  const search = e.target.value.toLowerCase();
+  const filtered = allTeams.filter(t => 
+    t.nombre.toLowerCase().includes(search)
+  );
+  renderTeams(filtered);
+});
+
+// Filtrar por grupo
+document.getElementById('groupFilter').addEventListener('change', (e) => {
+  const group = e.target.value;
+  if (group === 'all') {
+    renderTeams(allTeams);
+  } else {
+    const filtered = allTeams.filter(t => t.grupo === group);
+    renderTeams(filtered);
+  }
+});
+
+// Cargar datos al iniciar
+loadTeams();
+</script>
 </html>
