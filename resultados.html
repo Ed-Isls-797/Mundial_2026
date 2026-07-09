@@ -34,39 +34,6 @@
 
 <main>
 
-    <!-- ===== Panel: cargar nuevo partido (admin) ===== -->
-    <section class="panel">
-        <h2>Cargar nuevo partido</h2>
-        <p class="intro">Selecciona la fase y las dos selecciones para programar un partido.</p>
-
-        <form id="form-partido">
-            <div class="form-grid">
-                <label>
-                    Fase
-                    <select id="sel-fase" required></select>
-                </label>
-                <label>
-                    Selección local
-                    <select id="sel-local" required></select>
-                </label>
-                <label>
-                    Selección visitante
-                    <select id="sel-visitante" required></select>
-                </label>
-                <label>
-                    Fecha y hora
-                    <input type="datetime-local" id="input-fecha" required>
-                </label>
-                <label>
-                    Estadio
-                    <select id="sel-estadio" required></select>
-                </label>
-            </div>
-            <button type="submit" class="btn">Programar partido</button>
-            <p id="mensaje-form" class="mensaje"></p>
-        </form>
-    </section>
-
     <!-- ===== Panel: listado y carga de resultados ===== -->
     <section>
         <h2>Partidos y resultados</h2>
@@ -82,7 +49,7 @@
                 <option value="">Todos</option>
             </select>
         </div>
-        
+
 
         <div class="tabla-wrap">
             <table class="partidos">
