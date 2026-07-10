@@ -1,43 +1,59 @@
+:root {
+    --navy: #0a1a3c;
+    --blue-deep: #123a7a;
+    --blue: #1f5fd1;
+    --gold: #d4af37;
+    --gold-light: #f0d98c;
+    --glass-bg: rgba(255, 255, 255, 0.06);
+    --glass-bg-strong: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --texto: #f7f5ef;
+    --texto-suave: rgba(247, 245, 239, 0.68);
+    --sombra: rgba(0, 0, 0, 0.35);
+}
+
 * {
     box-sizing: border-box;
 }
 
-body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    background-color: #f4f6f9;
-    color: #2d2d2d;
-    margin: 0;
-    line-height: 1.6;
-}
-
 /* ---------- HERO ---------- */
 .hero {
-    background: linear-gradient(135deg, #10123f 0%, #1a1a6e 55%, #0066cc 100%);
-    color: #fff;
-    padding: 70px 20px 60px;
+    background: linear-gradient(135deg, rgba(18, 58, 122, 0.55), rgba(31, 95, 209, 0.35));
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    color: var(--texto);
+    padding: 60px 32px 50px;
     text-align: center;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 30px var(--sombra);
 }
 
 .hero-eyebrow {
     display: inline-block;
-    background: rgba(255,255,255,0.12);
+    background: rgba(212, 175, 55, 0.15);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: var(--gold-light);
     padding: 6px 16px;
     border-radius: 999px;
     font-size: 0.85rem;
     letter-spacing: 0.5px;
     margin-bottom: 18px;
+    font-weight: 600;
 }
 
 .hero h1 {
-    font-size: 3rem;
+    font-size: 2.6rem;
     font-weight: 800;
     margin: 0 0 10px;
-    letter-spacing: -1px;
+    letter-spacing: -0.5px;
+    color: #fff;
 }
 
 .hero-subtitle {
-    font-size: 1.15rem;
-    color: #dbe4ff;
+    font-size: 1.05rem;
+    color: var(--texto-suave);
     margin: 0 0 24px;
 }
 
@@ -49,33 +65,33 @@ body {
     justify-content: center;
     gap: 28px;
     flex-wrap: wrap;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .hero-checks li {
-    color: #7CFC9B;
+    color: var(--gold-light);
 }
 
 /* ---------- CONTAINER / INTRO ---------- */
 .container {
     max-width: 1100px;
     margin: 0 auto;
-    padding: 40px 20px 80px;
+    padding: 0 20px 80px;
 }
 
 .intro h2 {
-    color: #0066cc;
-    font-size: 1.6rem;
-    font-weight: 700;
+    color: var(--gold-light);
+    font-size: 1.5rem;
+    font-weight: 800;
     margin-bottom: 16px;
-    border-bottom: 3px solid #0066cc;
+    border-bottom: 3px solid var(--gold);
     display: inline-block;
     padding-bottom: 6px;
 }
 
 .intro p {
-    font-size: 1.05rem;
-    color: #444;
+    font-size: 1.02rem;
+    color: var(--texto-suave);
     margin-bottom: 16px;
     max-width: 75ch;
 }
@@ -91,10 +107,17 @@ body {
 .filters input,
 .filters select {
     padding: 12px 16px;
-    border-radius: 10px;
-    border: 1px solid #d9dee6;
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    color: var(--texto);
     font-size: 1rem;
-    background: #fff;
+}
+
+.filters input::placeholder {
+    color: var(--texto-suave);
 }
 
 .filters input {
@@ -104,8 +127,14 @@ body {
 
 .filters input:focus,
 .filters select:focus {
-    outline: 2px solid #0066cc;
+    outline: 2px solid var(--blue);
     outline-offset: 1px;
+    background: var(--glass-bg-strong);
+}
+
+.filters select option {
+    background: var(--navy);
+    color: #fff;
 }
 
 /* ---------- TEAMS GRID ---------- */
@@ -116,32 +145,35 @@ body {
 }
 
 .team-card {
-    background: #ffffff;
-    border-radius: 14px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border-radius: 16px;
     padding: 20px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    box-shadow: 0 8px 24px var(--sombra);
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    border: 1px solid transparent;
+    border: 1px solid var(--glass-border);
     overflow: hidden;
 }
 
 .team-card:hover,
 .team-card:focus-visible {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 24px rgba(0, 102, 204, 0.18);
-    border-color: #0066cc;
+    transform: translateY(-5px);
+    box-shadow: 0 14px 32px rgba(31, 95, 209, 0.3);
+    border-color: var(--blue);
+    background: var(--glass-bg-strong);
     outline: none;
 }
 
 .team-card-image {
     width: 100%;
     height: 160px;
-    background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
-    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    border-radius: 10px;
     display: none;
     align-items: center;
     justify-content: center;
@@ -177,9 +209,9 @@ body {
 
 .team-card-header h3 {
     margin: 0;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 1.1rem;
-    color: #1a1a6e;
+    color: var(--texto);
 }
 
 .team-card-info {
@@ -187,7 +219,7 @@ body {
     flex-direction: column;
     gap: 6px;
     font-size: 0.85rem;
-    color: #666;
+    color: var(--texto-suave);
 }
 
 .team-card-info p {
@@ -197,18 +229,18 @@ body {
 }
 
 .team-card-info strong {
-    color: #1a1a6e;
-    font-weight: 600;
+    color: var(--gold-light);
+    font-weight: 700;
 }
 
 .no-results {
-    color: #777;
+    color: var(--texto-suave);
     font-style: italic;
     padding: 20px 0;
 }
 
 .error {
-    color: #d64545;
+    color: #ff8787;
     padding: 20px 0;
 }
 
@@ -217,7 +249,9 @@ body {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(10, 12, 30, 0.6);
+    background: rgba(4, 8, 20, 0.65);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
     align-items: center;
     justify-content: center;
     padding: 20px;
@@ -229,40 +263,45 @@ body {
 }
 
 .modal-box {
-    background: #fff;
-    border-radius: 18px;
+    background: rgba(14, 26, 58, 0.75);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 20px;
     max-width: 560px;
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
     padding: 30px;
     position: relative;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    color: var(--texto);
 }
 
 .modal-close {
     position: absolute;
     top: 14px;
     right: 16px;
-    background: #f0f2f5;
+    background: rgba(255, 255, 255, 0.1);
     border: none;
     width: 34px;
     height: 34px;
     border-radius: 50%;
     font-size: 1.3rem;
     cursor: pointer;
-    color: #444;
+    color: #fff;
+    transition: background 0.2s ease;
 }
 
 .modal-close:hover {
-    background: #e2e6ec;
+    background: rgba(212, 175, 55, 0.3);
 }
 
 .modal-image-container {
     width: 100%;
     height: 220px;
-    background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
-    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    border-radius: 14px;
     display: none;
     align-items: center;
     justify-content: center;
@@ -289,16 +328,17 @@ body {
 
 .modal-header h3 {
     margin: 0 0 4px;
-    color: #1a1a6e;
+    color: #fff;
     font-size: 1.5rem;
 }
 
 .badge {
-    background: #eaf2ff;
-    color: #0066cc;
+    background: rgba(31, 95, 209, 0.25);
+    border: 1px solid rgba(31, 95, 209, 0.4);
+    color: #cfe0ff;
     padding: 3px 10px;
     border-radius: 999px;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 0.75rem;
 }
 
@@ -306,8 +346,9 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 14px;
-    background: #f7f9fc;
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
     padding: 16px;
     margin-bottom: 20px;
 }
@@ -322,25 +363,25 @@ body {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #888;
+    color: var(--texto-suave);
 }
 
 .modal-value {
-    font-weight: 700;
-    color: #1a1a6e;
+    font-weight: 800;
+    color: var(--gold-light);
     font-size: 0.95rem;
 }
 
 .modal-section h4,
 .modal-pros-cons h4 {
     margin: 0 0 6px;
-    color: #0066cc;
+    color: var(--gold-light);
     font-size: 1rem;
 }
 
 .modal-section p {
     margin: 0 0 18px;
-    color: #444;
+    color: var(--texto-suave);
 }
 
 .modal-pros-cons {
@@ -359,46 +400,48 @@ body {
 .modal-pros-cons li {
     font-size: 0.9rem;
     padding: 4px 0;
-    color: #333;
+    color: var(--texto);
 }
 
 .pros li::before {
     content: "✔ ";
-    color: #2e9e44;
+    color: #7CFC9B;
 }
 
 .cons li::before {
     content: "✖ ";
-    color: #d64545;
+    color: #ff8787;
 }
 
 .map-btn {
     display: block;
     width: 100%;
     text-align: center;
-    background: #0066cc;
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
     color: #fff;
     text-decoration: none;
     padding: 12px 20px;
-    border-radius: 8px;
-    font-weight: 700;
+    border-radius: 12px;
+    font-weight: 800;
     border: none;
     cursor: pointer;
     font-size: 1rem;
-    transition: background 0.2s ease;
+    box-shadow: 0 6px 18px rgba(31, 95, 209, 0.35);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .map-btn:hover {
-    background: #004f9e;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(31, 95, 209, 0.45);
 }
 
 #mapContainer {
-    background: #e1e5e9;
+    background: #1a2b52;
 }
 
 /* Asegurar que Leaflet funcione en el modal */
 .leaflet-container {
-    background: #f0f0f0;
+    background: #1a2b52;
 }
 
 @media (max-width: 480px) {

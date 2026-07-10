@@ -1,32 +1,32 @@
 :root {
-    --verde-cancha: #0b6e4f;
-    --verde-oscuro: #084c37;
-    --dorado: #d4af37;
-    --gris-claro: #f4f4f4;
-    --gris-medio: #e0e0e0;
-    --texto: #222;
-    --texto-suave: #555;
-    --blanco: #ffffff;
-    --sombra: rgba(0, 0, 0, 0.15);
+    --navy: #0a1a3c;
+    --blue-deep: #123a7a;
+    --blue: #1f5fd1;
+    --gold: #d4af37;
+    --gold-light: #f0d98c;
+    --glass-bg: rgba(255, 255, 255, 0.06);
+    --glass-bg-strong: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --texto: #f7f5ef;
+    --texto-suave: rgba(247, 245, 239, 0.68);
+    --sombra: rgba(0, 0, 0, 0.35);
 }
 
 * {
     box-sizing: border-box;
 }
 
-body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    background-color: var(--gris-claro);
-    color: var(--texto);
-    margin: 0;
-    padding: 0;
-}
-
 header {
-    background: linear-gradient(135deg, var(--verde-oscuro), var(--verde-cancha));
-    color: var(--blanco);
-    padding: 30px 20px;
+    background: linear-gradient(135deg, rgba(18, 58, 122, 0.55), rgba(31, 95, 209, 0.35));
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    color: var(--texto);
+    padding: 30px 28px;
     text-align: center;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 30px var(--sombra);
 }
 
 header h1 {
@@ -38,21 +38,22 @@ header h1 {
 header p {
     margin: 8px 0 0;
     font-size: 1rem;
-    opacity: 0.9;
+    color: var(--gold-light);
 }
 
 main {
-    max-width: 1000px;
+    max-width: 1050px;
     margin: 0 auto;
-    padding: 25px 20px 60px;
+    padding: 0 20px 60px;
 }
 
 h2 {
-    color: var(--verde-oscuro);
-    border-bottom: 3px solid var(--dorado);
+    color: var(--gold-light);
+    border-bottom: 3px solid var(--gold);
     display: inline-block;
     padding-bottom: 5px;
     margin-bottom: 20px;
+    font-weight: 800;
 }
 
 p.intro {
@@ -69,17 +70,19 @@ p.intro {
 }
 
 .confederacion-btn {
-    background-color: var(--blanco);
-    border: 2px solid var(--gris-medio);
-    border-left: 6px solid var(--verde-cancha);
-    border-radius: 8px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-left: 4px solid var(--blue);
+    border-radius: 14px;
     padding: 18px 16px;
     cursor: pointer;
     text-align: left;
     font-size: 1rem;
-    font-weight: bold;
-    color: var(--verde-oscuro);
-    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+    font-weight: 800;
+    color: var(--texto);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
 .confederacion-btn small {
@@ -92,19 +95,21 @@ p.intro {
 
 .confederacion-btn:hover,
 .confederacion-btn:focus {
-    background-color: #eefaf3;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px var(--sombra);
+    background: var(--glass-bg-strong);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px var(--sombra);
+    border-left-color: var(--gold);
 }
 
 .confederacion-btn.activo {
-    background-color: var(--verde-cancha);
-    color: var(--blanco);
-    border-left-color: var(--dorado);
+    background: linear-gradient(135deg, rgba(31, 95, 209, 0.4), rgba(212, 175, 55, 0.18));
+    color: #fff;
+    border-left-color: var(--gold);
+    border-color: rgba(212, 175, 55, 0.4);
 }
 
 .confederacion-btn.activo small {
-    color: #dfffef;
+    color: rgba(255, 255, 255, 0.85);
 }
 
 /* -------- Lista de países -------- */
@@ -122,21 +127,32 @@ p.intro {
     align-items: center;
     gap: 10px;
     margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.paises-titulo h2 {
+    color: var(--texto);
+    border-bottom: none;
+    font-size: 1.2rem;
 }
 
 .paises-titulo button.volver {
-    background: none;
-    border: 1px solid var(--verde-cancha);
-    color: var(--verde-cancha);
-    border-radius: 6px;
-    padding: 6px 12px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    color: var(--gold-light);
+    border-radius: 10px;
+    padding: 8px 14px;
     cursor: pointer;
     font-size: 0.85rem;
+    font-weight: 700;
+    transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .paises-titulo button.volver:hover {
-    background-color: var(--verde-cancha);
-    color: var(--blanco);
+    background: rgba(212, 175, 55, 0.15);
+    border-color: var(--gold);
 }
 
 .grid-paises {
@@ -146,19 +162,22 @@ p.intro {
 }
 
 .pais-card {
-    background-color: var(--blanco);
-    border: 1px solid var(--gris-medio);
-    border-radius: 8px;
-    padding: 16px 10px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 18px 10px;
     text-align: center;
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
 .pais-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 10px var(--sombra);
-    border-color: var(--verde-cancha);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px var(--sombra);
+    border-color: var(--blue);
+    background: var(--glass-bg-strong);
 }
 
 .pais-card .bandera {
@@ -168,20 +187,20 @@ p.intro {
 }
 
 .pais-card .nombre-pais {
-    font-weight: bold;
+    font-weight: 700;
     color: var(--texto);
     font-size: 0.95rem;
 }
 
 .pais-card .grupo-tag {
     display: inline-block;
-    margin-top: 6px;
-    background-color: var(--gris-claro);
-    color: var(--verde-oscuro);
+    margin-top: 8px;
+    background: rgba(212, 175, 55, 0.15);
+    color: var(--gold-light);
     font-size: 0.75rem;
-    padding: 2px 8px;
-    border-radius: 10px;
-    border: 1px solid var(--gris-medio);
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
 }
 
 /* -------- Modal (cuadro emergente) -------- */
@@ -189,7 +208,9 @@ p.intro {
     display: none;
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.55);
+    background-color: rgba(4, 8, 20, 0.65);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
     align-items: center;
     justify-content: center;
     z-index: 1000;
@@ -201,15 +222,19 @@ p.intro {
 }
 
 .modal {
-    background-color: var(--blanco);
-    border-radius: 10px;
+    background: rgba(14, 26, 58, 0.75);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 20px;
     max-width: 480px;
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
     padding: 0;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     animation: aparecer 0.2s ease;
+    color: var(--texto);
 }
 
 @keyframes aparecer {
@@ -218,10 +243,11 @@ p.intro {
 }
 
 .modal-header {
-    background: linear-gradient(135deg, var(--verde-oscuro), var(--verde-cancha));
-    color: var(--blanco);
-    padding: 20px;
-    border-radius: 10px 10px 0 0;
+    background: linear-gradient(135deg, rgba(18, 58, 122, 0.7), rgba(31, 95, 209, 0.45));
+    color: #fff;
+    padding: 24px 20px;
+    border-radius: 20px 20px 0 0;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.3);
     position: relative;
     text-align: center;
 }
@@ -241,22 +267,30 @@ p.intro {
     position: absolute;
     top: 12px;
     right: 14px;
-    background: none;
+    background: rgba(255, 255, 255, 0.1);
     border: none;
-    color: var(--blanco);
-    font-size: 1.4rem;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    color: #fff;
+    font-size: 1.3rem;
     cursor: pointer;
     line-height: 1;
+    transition: background 0.2s ease;
+}
+
+.modal-header .cerrar:hover {
+    background: rgba(212, 175, 55, 0.3);
 }
 
 .modal-body {
-    padding: 20px;
+    padding: 22px 20px;
 }
 
 .dato {
     margin-bottom: 14px;
     padding-bottom: 12px;
-    border-bottom: 1px solid var(--gris-medio);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .dato:last-child {
@@ -269,8 +303,8 @@ p.intro {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--verde-cancha);
-    font-weight: bold;
+    color: var(--gold-light);
+    font-weight: 800;
     margin-bottom: 3px;
 }
 
@@ -282,25 +316,29 @@ p.intro {
 
 .mapa-link {
     display: inline-block;
-    margin-top: 6px;
-    background-color: var(--verde-cancha);
-    color: var(--blanco);
+    margin-top: 8px;
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    color: #fff;
     text-decoration: none;
-    padding: 6px 12px;
-    border-radius: 6px;
+    padding: 8px 16px;
+    border-radius: 10px;
     font-size: 0.85rem;
+    font-weight: 700;
+    box-shadow: 0 4px 14px rgba(31, 95, 209, 0.35);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .mapa-link:hover {
-    background-color: var(--verde-oscuro);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(31, 95, 209, 0.45);
 }
 
 .aviso-demo {
-    background-color: #fff8e1;
-    border: 1px solid var(--dorado);
-    border-radius: 6px;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 10px;
     padding: 10px 14px;
     font-size: 0.85rem;
-    color: #7a5c00;
+    color: var(--gold-light);
     margin-top: 20px;
 }

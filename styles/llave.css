@@ -4,12 +4,13 @@
     --blue: #1f5fd1;
     --gold: #d4af37;
     --gold-light: #f0d98c;
-    --white: #ffffff;
-    --gris-fondo: #f8f9fa;
-    --gris-borde: #e2e8f0;
-    --texto: #0a1a3c;
-    --texto-suave: #4a5568;
-    --sombra: rgba(10, 26, 60, 0.08);
+    --white: #f7f5ef;
+    --glass-bg: rgba(255, 255, 255, 0.06);
+    --glass-bg-strong: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --texto: #f7f5ef;
+    --texto-suave: rgba(247, 245, 239, 0.68);
+    --sombra: rgba(0, 0, 0, 0.35);
 }
 
 * {
@@ -18,21 +19,20 @@
     padding: 0;
 }
 
-body {
-    font-family: 'Inter', system-ui, sans-serif;
-    background-color: var(--gris-fondo);
-    color: var(--texto);
-    line-height: 1.5;
-}
-
 /* -------- Header (Mantiene la consistencia) -------- */
 header {
-    background: radial-gradient(circle at 80% 20%, var(--blue-deep) 0%, var(--navy) 60%, #061027 100%);
+    background: linear-gradient(135deg, rgba(18, 58, 122, 0.55), rgba(31, 95, 209, 0.35));
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
     color: var(--white);
-    padding: 50px 20px;
+    padding: 40px 24px;
     text-align: center;
     position: relative;
-    border-bottom: 4px solid var(--gold);
+    margin-bottom: 24px;
+    box-shadow: 0 8px 30px var(--sombra);
+    overflow: hidden;
 }
 
 header::before {
@@ -40,8 +40,8 @@ header::before {
     position: absolute;
     inset: 0;
     background-image:
-        repeating-linear-gradient(0deg, rgba(212,175,55,0.03) 0 1px, transparent 1px 40px),
-        repeating-linear-gradient(90deg, rgba(212,175,55,0.03) 0 1px, transparent 1px 40px);
+        repeating-linear-gradient(0deg, rgba(212,175,55,0.05) 0 1px, transparent 1px 40px),
+        repeating-linear-gradient(90deg, rgba(212,175,55,0.05) 0 1px, transparent 1px 40px);
     pointer-events: none;
 }
 
@@ -64,7 +64,7 @@ header p {
 main {
     max-width: 1500px;
     margin: 0 auto;
-    padding: 40px 20px 80px;
+    padding: 0 20px 80px;
 }
 
 p.intro {
@@ -114,7 +114,7 @@ p.intro {
 
 .fase-titulo {
     font-family: 'Anton', Arial, sans-serif;
-    color: var(--navy);
+    color: var(--gold-light);
     font-size: 1.1rem;
     letter-spacing: 0.5px;
     text-transform: uppercase;
@@ -146,17 +146,20 @@ p.intro {
 
 /* -------- Tarjeta de partido (Estilo Bracket Pro) -------- */
 .match-card {
-    background: var(--white);
-    border: 1px solid var(--gris-borde);
-    border-radius: 10px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
     padding: 12px 14px;
-    box-shadow: 0 6px 15px var(--sombra);
-    transition: transform 0.2s ease, border-color 0.2s ease;
+    box-shadow: 0 8px 20px var(--sombra);
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
 .match-card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(31, 95, 209, 0.4);
+    transform: translateY(-3px);
+    border-color: var(--blue);
+    background: var(--glass-bg-strong);
 }
 
 .match-equipo {
@@ -167,11 +170,11 @@ p.intro {
     padding: 8px 0;
     font-size: 0.9rem;
     font-weight: 700;
-    color: var(--navy);
+    color: var(--texto);
 }
 
 .match-equipo:first-child {
-    border-bottom: 1px solid var(--gris-borde);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .match-equipo .nombre {
@@ -183,7 +186,7 @@ p.intro {
 /* El marcador resalta con el azul vibrante */
 .match-equipo .marcador {
     font-weight: 800;
-    color: var(--blue);
+    color: var(--gold-light);
     font-size: 1rem;
     min-width: 20px;
     text-align: center;
@@ -202,9 +205,9 @@ p.intro {
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--texto-suave);
-    background: var(--gris-fondo);
+    background: rgba(255, 255, 255, 0.06);
     padding: 2px 6px;
-    border-radius: 4px;
+    border-radius: 6px;
     margin-top: 6px;
 }
 
@@ -214,21 +217,23 @@ p.intro {
     font-weight: 500;
     color: var(--texto-suave);
     margin-top: 8px;
-    border-top: 1px dashed var(--gris-borde);
+    border-top: 1px dashed rgba(255, 255, 255, 0.15);
     padding-top: 6px;
 }
 
 /* -------- Estado vacío de una fase -------- */
 .fase-vacia {
-    background: var(--white);
-    border: 1px dashed var(--gris-borde);
-    border-radius: 10px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px dashed var(--glass-border);
+    border-radius: 14px;
     padding: 24px 16px;
     text-align: center;
     color: var(--texto-suave);
     font-size: 0.85rem;
     margin: auto 0;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 /* Badge estilizado para indicar "Esperando Rivales" */
@@ -236,9 +241,9 @@ p.intro {
     display: inline-block;
     margin-top: 10px;
     padding: 4px 12px;
-    border-radius: 6px;
-    background: rgba(214, 175, 55, 0.15);
-    color: #977300;
+    border-radius: 999px;
+    background: rgba(212, 175, 55, 0.15);
+    color: var(--gold-light);
     font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
