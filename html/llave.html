@@ -37,7 +37,7 @@
 <main>
     <p class="intro">
         Esta llave muestra la <strong>progresión real de los ganadores</strong>. 
-        Los equipos que ganan en Dieciseisavos avanzan automáticamente a Octavos.
+        Muestra <strong>Dieciseisavos, Octavos y Cuartos de final</strong>.
         Los partidos pendientes se muestran con <strong>"Por definir"</strong>.
     </p>
 
@@ -147,179 +147,203 @@
         return seleccionesMap[id] ? seleccionesMap[id].bandera : '';
     }
 
+    function normalizarTexto(value) {
+        return (value || '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim();
+    }
+
+    function crearMapaFasesPorNombre(fases) {
+        const mapa = {};
+        fases.forEach(f => {
+            mapa[normalizarTexto(f.nombre)] = f.id_fase;
+        });
+        return mapa;
+    }
+
+    function resolverIdFase(partido, mapaFasesPorNombre) {
+        if (partido.id_fase != null) return Number(partido.id_fase);
+
+        const faseTexto = normalizarTexto(partido.fase);
+        if (!faseTexto) return null;
+
+        if (mapaFasesPorNombre[faseTexto] != null) return mapaFasesPorNombre[faseTexto];
+        if (faseTexto.includes('dieciseisavos')) return 2;
+        if (faseTexto.includes('octavos')) return 3;
+        if (faseTexto.includes('cuartos')) return 4;
+
+        return null;
+    }
+
+    function enriquecerPartido(partido, seleccionesMap, mapaFasesPorNombre) {
+        const idFase = resolverIdFase(partido, mapaFasesPorNombre);
+        const local = seleccionesMap[partido.id_local] || null;
+        const visitante = seleccionesMap[partido.id_visitante] || null;
+
+        return {
+            ...partido,
+            id_fase: idFase,
+            local_nombre: local ? local.nombre : (partido.local || 'Por definir'),
+            visitante_nombre: visitante ? visitante.nombre : (partido.visitante || 'Por definir'),
+            local_bandera: local ? local.bandera : (partido.bandera_local || ''),
+            visitante_bandera: visitante ? visitante.bandera : (partido.bandera_visitante || ''),
+            estadio: partido.estadio || null,
+            ganador: obtenerGanador(partido)
+        };
+    }
+
+    function generarFaseDesdeGanadores(faseId, partidosPrevios, inicioId, seleccionesMap) {
+        const ganadores = partidosPrevios.map(p => p.ganador);
+        const partidosGenerados = [];
+
+        for (let i = 0; i < partidosPrevios.length; i += 2) {
+            const idLocal = ganadores[i] || null;
+            const idVisitante = ganadores[i + 1] || null;
+
+            partidosGenerados.push({
+                id_partido: inicioId + i,
+                id_fase: faseId,
+                id_local: idLocal,
+                id_visitante: idVisitante,
+                goles_local: null,
+                goles_visitante: null,
+                penales_local: null,
+                penales_visitante: null,
+                fecha: null,
+                estadio: null,
+                local_nombre: idLocal ? obtenerNombre(idLocal, seleccionesMap) : 'Por definir',
+                visitante_nombre: idVisitante ? obtenerNombre(idVisitante, seleccionesMap) : 'Por definir',
+                local_bandera: idLocal ? obtenerBandera(idLocal, seleccionesMap) : '',
+                visitante_bandera: idVisitante ? obtenerBandera(idVisitante, seleccionesMap) : '',
+                ganador: null,
+                es_generado: true
+            });
+        }
+
+        return partidosGenerados;
+    }
+
+    function slugifyName(value) {
+        return (value || '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/[^a-z0-9-]/g, '');
+    }
+
+    function normalizeName(value) {
+        return (value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim();
+    }
+
+    function getFlagCandidates(flagValue, teamName) {
+        const raw = (flagValue || '').toString().trim();
+        const candidates = [];
+
+        if (/^https?:\/\//i.test(raw)) return [raw];
+
+        if (/\.(png|jpe?g|webp|svg)$/i.test(raw)) {
+            if (raw.startsWith('../') || raw.startsWith('./') || raw.startsWith('/')) {
+                candidates.push(raw);
+            } else if (raw.startsWith('imagenes/')) {
+                candidates.push(`../${raw}`);
+            } else {
+                candidates.push(`../imagenes/${raw}`);
+            }
+        }
+
+        const clean = normalizeName(teamName);
+        const lower = clean.toLowerCase();
+
+        if (clean) {
+            const bases = [
+                lower.replace(/\s+/g, '-'),
+                lower.replace(/\s+/g, '_'),
+                clean.replace(/\s+/g, '_'),
+                clean.replace(/\s+/g, '-'),
+                lower.replace(/\s+/g, '')
+            ];
+            const exts = ['png', 'jpg', 'jpeg', 'webp', 'svg'];
+
+            bases.forEach(base => {
+                exts.forEach(ext => {
+                    candidates.push(`../imagenes/${base}.${ext}`);
+                });
+            });
+        }
+
+        return [...new Set(candidates)];
+    }
+
+    function handleFlagError(img) {
+        const rest = (img.dataset.fallbacks || '').split('|').filter(Boolean);
+        if (rest.length > 0) {
+            img.src = rest.shift();
+            img.dataset.fallbacks = rest.join('|');
+            return;
+        }
+        img.outerHTML = '<span class="flag-emoji">🏳️</span>';
+    }
+
+    function renderFlagHTML(flagValue, teamName) {
+        const candidates = getFlagCandidates(flagValue, teamName);
+
+        if (candidates.length > 0) {
+            const [first, ...rest] = candidates;
+            return `<img class="flag-inline" src="${first}" data-fallbacks="${rest.join('|')}" alt="Bandera de ${teamName}" loading="lazy" onerror="handleFlagError(this)">`;
+        }
+
+        const raw = (flagValue || '').toString().trim();
+        return `<span class="flag-emoji">${raw || '🏳️'}</span>`;
+    }
+
     // ============================================================
     //  CONSTRUIR LLAVE
     // ============================================================
 
     function construirLlave(fases, partidos, seleccionesMap) {
-        const fasesEliminatorias = fases.filter(f => f.id_fase >= 2).sort((a, b) => a.orden - b.orden);
+        const mapaFasesPorNombre = crearMapaFasesPorNombre(fases);
+        const fasesObjetivoIds = [2, 3, 4]; // Formato solicitado: 16vos, 8vos y cuartos
+        const fasesObjetivo = fases
+            .filter(f => fasesObjetivoIds.includes(Number(f.id_fase)))
+            .sort((a, b) => a.orden - b.orden);
+
+        const partidosEnriquecidos = partidos
+            .map(p => enriquecerPartido(p, seleccionesMap, mapaFasesPorNombre))
+            .filter(p => p.id_fase != null)
+            .sort((a, b) => {
+                const fechaA = a.fecha ? new Date(a.fecha).getTime() : Number.MAX_SAFE_INTEGER;
+                const fechaB = b.fecha ? new Date(b.fecha).getTime() : Number.MAX_SAFE_INTEGER;
+                if (fechaA !== fechaB) return fechaA - fechaB;
+                return (a.id_partido || 0) - (b.id_partido || 0);
+            });
+
         const llaveConstruida = [];
 
-        // --- FASE 1: DIECISEISAVOS ---
-        const partidosDieciseisavos = partidos.filter(p => p.id_fase === 2);
-        const dieciseisavosProcesados = partidosDieciseisavos.map(p => {
-            const ganador = obtenerGanador(p);
-            return {
-                ...p,
-                local_nombre: obtenerNombre(p.id_local, seleccionesMap),
-                visitante_nombre: obtenerNombre(p.id_visitante, seleccionesMap),
-                local_bandera: obtenerBandera(p.id_local, seleccionesMap),
-                visitante_bandera: obtenerBandera(p.id_visitante, seleccionesMap),
-                ganador: ganador
-            };
-        });
+        let partidosPrevios = [];
 
-        llaveConstruida.push({
-            fase: fasesEliminatorias.find(f => f.id_fase === 2),
-            partidos: dieciseisavosProcesados
-        });
+        fasesObjetivo.forEach(fase => {
+            let partidosDeFase = partidosEnriquecidos.filter(p => Number(p.id_fase) === Number(fase.id_fase));
 
-        // --- FASE 2: OCTAVOS ---
-        let ganadoresAnteriores = dieciseisavosProcesados.map(p => ({
-            id_seleccion: p.ganador,
-            nombre: p.ganador ? obtenerNombre(p.ganador, seleccionesMap) : null,
-            bandera: p.ganador ? obtenerBandera(p.ganador, seleccionesMap) : null
-        }));
+            if (partidosDeFase.length === 0) {
+                if (Number(fase.id_fase) === 3 && partidosPrevios.length > 0) {
+                    partidosDeFase = generarFaseDesdeGanadores(3, partidosPrevios, 1000, seleccionesMap);
+                } else if (Number(fase.id_fase) === 4 && partidosPrevios.length > 0) {
+                    partidosDeFase = generarFaseDesdeGanadores(4, partidosPrevios, 2000, seleccionesMap);
+                }
+            }
 
-        const octavosPartidos = [];
-        for (let i = 0; i < ganadoresAnteriores.length; i += 2) {
-            const g1 = ganadoresAnteriores[i];
-            const g2 = ganadoresAnteriores[i + 1];
-            
-            octavosPartidos.push({
-                id_partido: 1000 + i,
-                id_fase: 3,
-                id_local: g1 ? g1.id_seleccion : null,
-                id_visitante: g2 ? g2.id_seleccion : null,
-                goles_local: null,
-                goles_visitante: null,
-                penales_local: null,
-                penales_visitante: null,
-                fecha: null,
-                id_estadio: null,
-                local_nombre: g1 ? g1.nombre : 'Por definir',
-                visitante_nombre: g2 ? g2.nombre : 'Por definir',
-                local_bandera: g1 ? g1.bandera : null,
-                visitante_bandera: g2 ? g2.bandera : null,
-                ganador: null,
-                es_generado: true
+            llaveConstruida.push({
+                fase,
+                partidos: partidosDeFase
             });
-        }
 
-        llaveConstruida.push({
-            fase: fasesEliminatorias.find(f => f.id_fase === 3),
-            partidos: octavosPartidos
-        });
-
-        // --- FASE 3: CUARTOS ---
-        ganadoresAnteriores = octavosPartidos.map(p => ({
-            id_seleccion: p.ganador,
-            nombre: p.ganador ? obtenerNombre(p.ganador, seleccionesMap) : null,
-            bandera: p.ganador ? obtenerBandera(p.ganador, seleccionesMap) : null
-        }));
-
-        const cuartosPartidos = [];
-        for (let i = 0; i < ganadoresAnteriores.length; i += 2) {
-            const g1 = ganadoresAnteriores[i];
-            const g2 = ganadoresAnteriores[i + 1];
-            
-            cuartosPartidos.push({
-                id_partido: 2000 + i,
-                id_fase: 4,
-                id_local: g1 ? g1.id_seleccion : null,
-                id_visitante: g2 ? g2.id_seleccion : null,
-                goles_local: null,
-                goles_visitante: null,
-                penales_local: null,
-                penales_visitante: null,
-                fecha: null,
-                id_estadio: null,
-                local_nombre: g1 ? g1.nombre : 'Por definir',
-                visitante_nombre: g2 ? g2.nombre : 'Por definir',
-                local_bandera: g1 ? g1.bandera : null,
-                visitante_bandera: g2 ? g2.bandera : null,
-                ganador: null,
-                es_generado: true
-            });
-        }
-
-        llaveConstruida.push({
-            fase: fasesEliminatorias.find(f => f.id_fase === 4),
-            partidos: cuartosPartidos
-        });
-
-        // --- FASE 4: SEMIFINAL ---
-        ganadoresAnteriores = cuartosPartidos.map(p => ({
-            id_seleccion: p.ganador,
-            nombre: p.ganador ? obtenerNombre(p.ganador, seleccionesMap) : null,
-            bandera: p.ganador ? obtenerBandera(p.ganador, seleccionesMap) : null
-        }));
-
-        const semifinalPartidos = [];
-        for (let i = 0; i < ganadoresAnteriores.length; i += 2) {
-            const g1 = ganadoresAnteriores[i];
-            const g2 = ganadoresAnteriores[i + 1];
-            
-            semifinalPartidos.push({
-                id_partido: 3000 + i,
-                id_fase: 5,
-                id_local: g1 ? g1.id_seleccion : null,
-                id_visitante: g2 ? g2.id_seleccion : null,
-                goles_local: null,
-                goles_visitante: null,
-                penales_local: null,
-                penales_visitante: null,
-                fecha: null,
-                id_estadio: null,
-                local_nombre: g1 ? g1.nombre : 'Por definir',
-                visitante_nombre: g2 ? g2.nombre : 'Por definir',
-                local_bandera: g1 ? g1.bandera : null,
-                visitante_bandera: g2 ? g2.bandera : null,
-                ganador: null,
-                es_generado: true
-            });
-        }
-
-        llaveConstruida.push({
-            fase: fasesEliminatorias.find(f => f.id_fase === 5),
-            partidos: semifinalPartidos
-        });
-
-        // --- FASE 5: FINAL ---
-        ganadoresAnteriores = semifinalPartidos.map(p => ({
-            id_seleccion: p.ganador,
-            nombre: p.ganador ? obtenerNombre(p.ganador, seleccionesMap) : null,
-            bandera: p.ganador ? obtenerBandera(p.ganador, seleccionesMap) : null
-        }));
-
-        const finalPartidos = [];
-        for (let i = 0; i < ganadoresAnteriores.length; i += 2) {
-            const g1 = ganadoresAnteriores[i];
-            const g2 = ganadoresAnteriores[i + 1];
-            
-            finalPartidos.push({
-                id_partido: 4000 + i,
-                id_fase: 7,
-                id_local: g1 ? g1.id_seleccion : null,
-                id_visitante: g2 ? g2.id_seleccion : null,
-                goles_local: null,
-                goles_visitante: null,
-                penales_local: null,
-                penales_visitante: null,
-                fecha: null,
-                id_estadio: null,
-                local_nombre: g1 ? g1.nombre : 'Por definir',
-                visitante_nombre: g2 ? g2.nombre : 'Por definir',
-                local_bandera: g1 ? g1.bandera : null,
-                visitante_bandera: g2 ? g2.bandera : null,
-                ganador: null,
-                es_generado: true
-            });
-        }
-
-        llaveConstruida.push({
-            fase: fasesEliminatorias.find(f => f.id_fase === 7),
-            partidos: finalPartidos
+            partidosPrevios = partidosDeFase;
         });
 
         return llaveConstruida;
@@ -396,11 +420,11 @@
 
         card.innerHTML = `
             <div class="match-equipo${esPendienteLocal ? ' pendiente' : ''}">
-                <span class="nombre">${localBandera ? localBandera + ' ' : ''}${localNombre}</span>
+                <span class="nombre">${renderFlagHTML(localBandera, localNombre)}<span>${localNombre}</span></span>
                 <span class="marcador">${marcadorLocal}</span>
             </div>
             <div class="match-equipo${esPendienteVisitante ? ' pendiente' : ''}">
-                <span class="nombre">${visitanteBandera ? visitanteBandera + ' ' : ''}${visitanteNombre}</span>
+                <span class="nombre">${renderFlagHTML(visitanteBandera, visitanteNombre)}<span>${visitanteNombre}</span></span>
                 <span class="marcador">${marcadorVisit}</span>
             </div>
             ${penales}
@@ -439,16 +463,6 @@
             console.log(`   - ${fases.length} fases`);
             console.log(`   - ${partidos.length} partidos`);
             console.log(`   - ${selecciones.length} selecciones`);
-
-            // Verificar que hay partidos de dieciseisavos
-            const partidosDieciseisavos = partidos.filter(p => p.id_fase === 2);
-            console.log(`   - ${partidosDieciseisavos.length} partidos en Dieciseisavos`);
-
-            if (partidosDieciseisavos.length === 0) {
-                console.warn('⚠️ No hay partidos de Dieciseisavos en la API. Usando respaldo.');
-                usarDatosRespaldo();
-                return;
-            }
 
             // Construir mapa de selecciones
             const seleccionesMap = {};

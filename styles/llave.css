@@ -178,9 +178,33 @@ p.intro {
 }
 
 .match-equipo .nombre {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.match-equipo .nombre > span:last-child {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.flag-inline {
+    width: 22px;
+    height: 15px;
+    border-radius: 3px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.flag-emoji {
+    width: 22px;
+    display: inline-flex;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 /* El marcador resalta con el azul vibrante */

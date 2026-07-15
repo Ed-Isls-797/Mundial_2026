@@ -67,11 +67,6 @@
   <div id="teamModal" class="modal-overlay">
     <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTeamName">
       <button class="modal-close" id="modalClose" aria-label="Cerrar">&times;</button>
-      
-      <!-- Imagen de la selección -->
-      <div class="modal-image-container" style="display: none;">
-        <img id="modalTeamImage" src="" alt="Selección" class="modal-team-image">
-      </div>
 
       <div class="modal-header">
         <span id="modalFlag" class="modal-flag"></span>
@@ -138,6 +133,89 @@ let allTeams = [];
 let currentTeam = null;
 let map = null;
 
+function slugifyName(value) {
+  return (value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '');
+}
+
+function normalizeName(value) {
+  return (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+function getFlagImageCandidates(flagValue, teamName) {
+  const raw = (flagValue || '').toString().trim();
+  const candidates = [];
+
+  if (/^https?:\/\//i.test(raw)) return [raw];
+
+  if (/\.(png|jpe?g|webp|svg)$/i.test(raw)) {
+    if (raw.startsWith('../') || raw.startsWith('./') || raw.startsWith('/')) {
+      candidates.push(raw);
+    } else if (raw.startsWith('imagenes/')) {
+      candidates.push(`../${raw}`);
+    } else {
+      candidates.push(`../imagenes/${raw}`);
+    }
+  }
+
+  const clean = normalizeName(teamName);
+  const lower = clean.toLowerCase();
+
+  if (clean) {
+    const bases = [
+      lower.replace(/\s+/g, '-'),
+      lower.replace(/\s+/g, '_'),
+      clean.replace(/\s+/g, '_'),
+      clean.replace(/\s+/g, '-'),
+      lower.replace(/\s+/g, '')
+    ];
+    const exts = ['png', 'jpg', 'jpeg', 'webp', 'svg'];
+
+    bases.forEach(base => {
+      exts.forEach(ext => {
+        candidates.push(`../imagenes/${base}.${ext}`);
+      });
+    });
+  }
+
+  return [...new Set(candidates)];
+}
+
+function setFlagVisual(container, flagValue, teamName) {
+  if (!container) return;
+
+  const raw = (flagValue || '').toString().trim();
+  const candidates = getFlagImageCandidates(flagValue, teamName);
+
+  if (candidates.length > 0) {
+    let index = 0;
+    const img = document.createElement('img');
+    img.className = 'flag-image';
+    img.alt = `Bandera de ${teamName}`;
+    img.src = candidates[index];
+    img.onerror = () => {
+      index += 1;
+      if (index < candidates.length) {
+        img.src = candidates[index];
+      } else {
+        container.textContent = raw || '🏳️';
+      }
+    };
+    container.innerHTML = '';
+    container.appendChild(img);
+    return;
+  }
+
+  container.textContent = raw || '🏳️';
+}
+
 // Cargar datos del API
 async function loadTeams() {
   try {
@@ -167,15 +245,12 @@ function renderTeams(teams) {
     card.className = 'team-card';
     
     // Construir ruta de imagen
-    const imagePath = `imagenes/${team.nombre.toLowerCase().replace(/\s+/g, '-').replace(/[áéíóúñ]/g, char => {
-      const map = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ñ': 'n'};
-      return map[char] || char;
-    })}.png`;
+    const imagePath = getFlagImageCandidates(team.bandera, team.nombre)[0] || `../imagenes/${slugifyName(team.nombre)}.png`;
     
     card.innerHTML = `
       <div class="team-card-image" id="img-${team.id_seleccion}"></div>
       <div class="team-card-header">
-        <span class="team-flag">${team.bandera || '🏳️'}</span>
+        <span class="team-flag"></span>
         <h3>${team.nombre}</h3>
       </div>
       <div class="team-card-info">
@@ -195,6 +270,8 @@ function renderTeams(teams) {
       imgContainer.style.display = 'none';
     };
     testImg.src = imagePath;
+
+    setFlagVisual(card.querySelector('.team-flag'), team.bandera, team.nombre);
     
     card.addEventListener('click', () => showTeamModal(team));
     grid.appendChild(card);
@@ -220,7 +297,7 @@ async function loadGroups() {
 function showTeamModal(team) {
   currentTeam = team;
   
-  document.getElementById('modalFlag').textContent = team.bandera || '🏳️';
+  setFlagVisual(document.getElementById('modalFlag'), team.bandera, team.nombre);
   document.getElementById('modalTeamName').textContent = team.nombre;
   document.getElementById('modalGroupBadge').textContent = `Grupo ${team.grupo}`;
   document.getElementById('modalRanking').textContent = team.ranking || 'N/A';
@@ -229,23 +306,6 @@ function showTeamModal(team) {
   document.getElementById('modalStadium').textContent = team.estadio;
   
   document.getElementById('modalHistory').textContent = team.historia || 'Sin información';
-  
-  // Cargar imagen
-  const imagePath = `imagenes/${team.nombre.toLowerCase().replace(/\s+/g, '-').replace(/[áéíóúñ]/g, char => {
-    const map = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ñ': 'n'};
-    return map[char] || char;
-  })}.png`;
-  
-  const imageContainer = document.querySelector('.modal-image-container');
-  const testImg2 = new Image();
-  testImg2.onload = () => {
-    imageContainer.style.backgroundImage = `url('${imagePath}')`;
-    imageContainer.style.display = 'flex';
-  };
-  testImg2.onerror = () => {
-    imageContainer.style.display = 'none';
-  };
-  testImg2.src = imagePath;
   
   // Ventajas y desventajas
   const prosList = document.getElementById('modalPros');

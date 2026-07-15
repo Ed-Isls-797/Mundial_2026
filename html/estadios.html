@@ -98,6 +98,83 @@ const overlay = document.getElementById('overlay');
 let estadios = [];
 let mapaModal = null;
 
+function slugifyName(value) {
+    return (value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '');
+}
+
+function normalizeName(value) {
+    return (value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+}
+
+function getFlagCandidates(flagValue, teamName) {
+    const raw = (flagValue || '').toString().trim();
+    const candidates = [];
+
+    if (/^https?:\/\//i.test(raw)) return [raw];
+
+    if (/\.(png|jpe?g|webp|svg)$/i.test(raw)) {
+        if (raw.startsWith('../') || raw.startsWith('./') || raw.startsWith('/')) {
+            candidates.push(raw);
+        } else if (raw.startsWith('imagenes/')) {
+            candidates.push(`../${raw}`);
+        } else {
+            candidates.push(`../imagenes/${raw}`);
+        }
+    }
+
+    const clean = normalizeName(teamName);
+    const lower = clean.toLowerCase();
+
+    if (clean) {
+        const bases = [
+            lower.replace(/\s+/g, '-'),
+            lower.replace(/\s+/g, '_'),
+            clean.replace(/\s+/g, '_'),
+            clean.replace(/\s+/g, '-'),
+            lower.replace(/\s+/g, '')
+        ];
+        const exts = ['png', 'jpg', 'jpeg', 'webp', 'svg'];
+
+        bases.forEach(base => {
+            exts.forEach(ext => {
+                candidates.push(`../imagenes/${base}.${ext}`);
+            });
+        });
+    }
+
+    return [...new Set(candidates)];
+}
+
+function handleFlagError(img) {
+    const rest = (img.dataset.fallbacks || '').split('|').filter(Boolean);
+    if (rest.length > 0) {
+        img.src = rest.shift();
+        img.dataset.fallbacks = rest.join('|');
+        return;
+    }
+    img.outerHTML = '<span class="flag-emoji">🏳️</span>';
+}
+
+function renderFlagHTML(flagValue, teamName) {
+    const candidates = getFlagCandidates(flagValue, teamName);
+
+    if (candidates.length > 0) {
+        const [first, ...rest] = candidates;
+        return `<img class="flag-inline" src="${first}" data-fallbacks="${rest.join('|')}" alt="Bandera de ${teamName}" loading="lazy" onerror="handleFlagError(this)">`;
+    }
+
+    const raw = (flagValue || '').toString().trim();
+    return `<span class="flag-emoji">${raw || '🏳️'}</span>`;
+}
+
 function formatearFecha(fechaISO) {
     if (!fechaISO) return 'Por definir';
     const fecha = new Date(fechaISO);
@@ -182,9 +259,9 @@ function abrirModal(estadio) {
         contPartidos.innerHTML = estadio.partidos.map(p => `
             <div class="partido-mini">
                 <div class="partido-mini-equipos">
-                    <span>${p.bandera_local || ''} ${p.local}</span>
+                    <span class="equipo-con-bandera">${renderFlagHTML(p.bandera_local, p.local)}<span>${p.local}</span></span>
                     <span class="vs">${p.estado === 'jugado' ? `${p.goles_local} - ${p.goles_visitante}` : 'vs'}</span>
-                    <span>${p.visitante} ${p.bandera_visitante || ''}</span>
+                    <span class="equipo-con-bandera">${renderFlagHTML(p.bandera_visitante, p.visitante)}<span>${p.visitante}</span></span>
                 </div>
                 <div class="partido-mini-meta">
                     <span>${p.fase}</span>

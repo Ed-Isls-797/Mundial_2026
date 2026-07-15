@@ -285,6 +285,27 @@ p.intro {
     font-size: 0.9rem;
 }
 
+.equipo-con-bandera {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.flag-inline {
+    width: 24px;
+    height: 16px;
+    border-radius: 3px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.flag-emoji {
+    width: 24px;
+    display: inline-flex;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
 .partido-mini-equipos .vs {
     color: var(--gold-light);
     font-weight: 800;

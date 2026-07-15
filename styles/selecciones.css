@@ -205,6 +205,19 @@
 .team-card-header .team-flag {
     font-size: 2rem;
     line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 28px;
+    overflow: hidden;
+    border-radius: 4px;
+}
+
+.team-card-header .team-flag .flag-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .team-card-header h3 {
@@ -324,6 +337,19 @@
 
 .modal-flag {
     font-size: 3rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 44px;
+    overflow: hidden;
+    border-radius: 6px;
+}
+
+.modal-flag .flag-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .modal-header h3 {

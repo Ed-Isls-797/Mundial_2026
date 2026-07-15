@@ -122,6 +122,83 @@
     const tablaBody = document.getElementById('tabla-body');
     const clasificacionBody = document.getElementById('clasificacion-body');
 
+    function slugifyName(value) {
+        return (value || '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/[^a-z0-9-]/g, '');
+    }
+
+    function normalizeName(value) {
+        return (value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim();
+    }
+
+    function getFlagCandidates(flagValue, teamName) {
+        const raw = (flagValue || '').toString().trim();
+        const candidates = [];
+
+        if (/^https?:\/\//i.test(raw)) return [raw];
+
+        if (/\.(png|jpe?g|webp|svg)$/i.test(raw)) {
+            if (raw.startsWith('../') || raw.startsWith('./') || raw.startsWith('/')) {
+                candidates.push(raw);
+            } else if (raw.startsWith('imagenes/')) {
+                candidates.push(`../${raw}`);
+            } else {
+                candidates.push(`../imagenes/${raw}`);
+            }
+        }
+
+        const clean = normalizeName(teamName);
+        const lower = clean.toLowerCase();
+
+        if (clean) {
+            const bases = [
+                lower.replace(/\s+/g, '-'),
+                lower.replace(/\s+/g, '_'),
+                clean.replace(/\s+/g, '_'),
+                clean.replace(/\s+/g, '-'),
+                lower.replace(/\s+/g, '')
+            ];
+            const exts = ['png', 'jpg', 'jpeg', 'webp', 'svg'];
+
+            bases.forEach(base => {
+                exts.forEach(ext => {
+                    candidates.push(`../imagenes/${base}.${ext}`);
+                });
+            });
+        }
+
+        return [...new Set(candidates)];
+    }
+
+    function handleFlagError(img) {
+        const rest = (img.dataset.fallbacks || '').split('|').filter(Boolean);
+        if (rest.length > 0) {
+            img.src = rest.shift();
+            img.dataset.fallbacks = rest.join('|');
+            return;
+        }
+        img.outerHTML = '<span class="flag-emoji">🏳️</span>';
+    }
+
+    function renderFlagHTML(flagValue, teamName) {
+        const candidates = getFlagCandidates(flagValue, teamName);
+
+        if (candidates.length > 0) {
+            const [first, ...rest] = candidates;
+            return `<img class="flag-inline" src="${first}" data-fallbacks="${rest.join('|')}" alt="Bandera de ${teamName}" loading="lazy" onerror="handleFlagError(this)">`;
+        }
+
+        const raw = (flagValue || '').toString().trim();
+        return `<span class="flag-emoji">${raw || '🏳️'}</span>`;
+    }
+
     // ---------- Cargar catálogos (fases y grupos, para los filtros) ----------
     async function cargarCatalogos() {
         try {
@@ -206,7 +283,7 @@
         tr.innerHTML = `
             <td>${p.fase}</td>
             <td>${p.grupo || '—'}</td>
-            <td class="equipo-cell">${p.bandera_local ? p.bandera_local + ' ' : ''}${p.local}</td>
+            <td class="equipo-cell"><span class="equipo-inline">${renderFlagHTML(p.bandera_local, p.local)}<span>${p.local}</span></span></td>
             <td>
                 <div class="marcador">
                     <input type="number" min="0" class="input-local" value="${p.goles_local ?? ''}" placeholder="-">
@@ -221,7 +298,7 @@
                     <input type="number" min="0" class="input-pen-visitante" value="${p.penales_visitante ?? ''}" placeholder="-" title="Penales visitante">
                 </div>
             </td>
-            <td class="equipo-cell">${p.bandera_visitante ? p.bandera_visitante + ' ' : ''}${p.visitante}</td>
+            <td class="equipo-cell"><span class="equipo-inline">${renderFlagHTML(p.bandera_visitante, p.visitante)}<span>${p.visitante}</span></span></td>
             <td>${fechaTexto}<br><small>${p.estadio || ''}</small></td>
             <td><span class="badge ${p.estado}">${p.estado}</span></td>
             <td class="acciones">
@@ -307,7 +384,7 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${i + 1}</td>
-                    <td class="equipo-cell">${row.bandera ? row.bandera + ' ' : ''}${row.seleccion}</td>
+                    <td class="equipo-cell"><span class="equipo-inline">${renderFlagHTML(row.bandera, row.seleccion)}<span>${row.seleccion}</span></span></td>
                     <td>${row.PJ}</td>
                     <td>${row.PG}</td>
                     <td>${row.PE}</td>

@@ -6,6 +6,7 @@
 <title>Confederaciones - Mundial 2026</title>
 <link rel="stylesheet" href="../styles/sidebar.css">
 <link rel="stylesheet" href="../styles/confederaciones.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 </head>
 <body>
 <div class="page">
@@ -91,8 +92,11 @@
             </div>
             <div class="dato">
                 <span class="etiqueta">Estadio sede</span>
-                <span class="valor" id="modal-estadio"></span><br>
-                <a href="#" target="_blank" class="mapa-link" id="modal-mapa">Ver en Google Maps</a>
+                <span class="valor" id="modal-estadio"></span>
+            </div>
+            <div class="dato">
+                <span class="etiqueta">Ubicación del estadio</span>
+                <div id="mapContainer" style="width: 100%; height: 300px; border-radius: 8px; overflow: hidden; margin-top: 10px;"></div>
             </div>
         </div>
     </div>
@@ -113,6 +117,90 @@ const overlay = document.getElementById("overlay");
 
 
 let listaConfederaciones = {};
+let map = null;
+
+function slugifyName(value) {
+    return (value || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+}
+
+function normalizeName(value) {
+    return (value || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+}
+
+function getFlagImageCandidates(flagValue, countryName) {
+    const raw = (flagValue || "").toString().trim();
+    const candidates = [];
+
+    if (/^https?:\/\//i.test(raw)) return [raw];
+
+    if (/\.(png|jpe?g|webp|svg)$/i.test(raw)) {
+        if (raw.startsWith("../") || raw.startsWith("./") || raw.startsWith("/")) {
+            candidates.push(raw);
+        } else if (raw.startsWith("imagenes/")) {
+            candidates.push(`../${raw}`);
+        } else {
+            candidates.push(`../imagenes/${raw}`);
+        }
+    }
+
+    const clean = normalizeName(countryName);
+    const lower = clean.toLowerCase();
+
+    if (clean) {
+        const bases = [
+            lower.replace(/\s+/g, "-"),
+            lower.replace(/\s+/g, "_"),
+            clean.replace(/\s+/g, "_"),
+            clean.replace(/\s+/g, "-"),
+            lower.replace(/\s+/g, "")
+        ];
+        const exts = ["png", "jpg", "jpeg", "webp", "svg"];
+
+        bases.forEach(base => {
+            exts.forEach(ext => {
+                candidates.push(`../imagenes/${base}.${ext}`);
+            });
+        });
+    }
+
+    return [...new Set(candidates)];
+}
+
+function setFlagVisual(container, flagValue, countryName, fallbackEmoji = "🏳️") {
+    if (!container) return;
+
+    const raw = (flagValue || "").toString().trim();
+    const candidates = getFlagImageCandidates(flagValue, countryName);
+
+    if (candidates.length > 0) {
+        let index = 0;
+        const img = document.createElement("img");
+        img.className = "flag-image";
+        img.alt = `Bandera de ${countryName}`;
+        img.src = candidates[index];
+        img.onerror = () => {
+            index += 1;
+            if (index < candidates.length) {
+                img.src = candidates[index];
+            } else {
+                container.textContent = raw || fallbackEmoji;
+            }
+        };
+        container.innerHTML = "";
+        container.appendChild(img);
+        return;
+    }
+
+    container.textContent = raw || fallbackEmoji;
+}
 
 document.addEventListener("DOMContentLoaded", cargarDatosDeAPI);
 
@@ -210,19 +298,20 @@ function agruparPorConfederacion(selecciones) {
         
         const nombreReal = pais.nombre_seleccion;
         const emojiBandera = banderasEmoji[nombreReal] || "🏳️";
+        const banderaOrigen = pais.bandera || emojiBandera;
         const sedeAsignada = sedesEstadios[nombreReal] || { nombre: "Estadio por asignar", query: nombreReal };
         
         estructura[siglas].paises.push({
             nombre: nombreReal,
-            bandera: emojiBandera, 
+            bandera: banderaOrigen,
+            banderaFallback: emojiBandera,
             grupo: pais.nombre_grupo || "Por definir", 
             ranking: pais.ranking || "Sin ranking",
             historia: pais.historia || "Sin historia registrada.",
             ventajas: pais.ventajas || "Ninguna.",
             desventajas: pais.desventajas || "Ninguna.",
             entrenador: pais.entrenador || "Por confirmar",
-            estadio: sedeAsignada.nombre,
-            mapa: "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(sedeAsignada.query)
+            estadio: sedeAsignada.nombre
         });
     });
     
@@ -259,9 +348,10 @@ function mostrarPaises(clave) {
         const card = document.createElement("div");
         card.className = "pais-card";
         card.innerHTML =
-            '<span class="bandera">' + pais.bandera + '</span>' +
+            '<span class="bandera"></span>' +
             '<span class="nombre-pais">' + pais.nombre + '</span>' +
             '<span class="grupo-tag">Grupo ' + pais.grupo + '</span>';
+        setFlagVisual(card.querySelector('.bandera'), pais.bandera, pais.nombre, pais.banderaFallback || "🏳️");
         card.addEventListener("click", function () {
             abrirModal(pais);
         });
@@ -281,7 +371,7 @@ document.getElementById("btn-volver").addEventListener("click", function () {
    MODAL / CUADRO EMERGENTE
    ============================================================== */
 function abrirModal(pais) {
-    document.getElementById("modal-bandera").textContent = pais.bandera;
+    setFlagVisual(document.getElementById("modal-bandera"), pais.bandera, pais.nombre, pais.banderaFallback || "🏳️");
     document.getElementById("modal-nombre").textContent = pais.nombre;
     document.getElementById("modal-ranking").textContent = pais.ranking;
     document.getElementById("modal-historia").textContent = pais.historia;
@@ -290,12 +380,70 @@ function abrirModal(pais) {
     document.getElementById("modal-entrenador").textContent = pais.entrenador;
     document.getElementById("modal-grupo").textContent = "Grupo " + pais.grupo;
     document.getElementById("modal-estadio").textContent = pais.estadio;
-    document.getElementById("modal-mapa").href = pais.mapa;
+    inicializarMapa(pais);
     overlay.classList.add("visible");
+}
+
+function inicializarMapa(pais) {
+    setTimeout(() => {
+        const mapContainer = document.getElementById("mapContainer");
+
+        if (map) {
+            map.remove();
+        }
+
+        let lat = 25.0;
+        let lng = -100.0;
+        let zoom = 3;
+
+        const estadioCoords = {
+            "Estadio Ciudad de México": { lat: 19.3043, lng: -99.1609 },
+            "Estadio Azteca": { lat: 19.3043, lng: -99.1609 },
+            "Estadio de Guadalajara": { lat: 20.5937, lng: -103.4050 },
+            "Estadio Akron": { lat: 20.5937, lng: -103.4050 },
+            "BC Place": { lat: 49.2768, lng: -123.1118 },
+            "Estadio de Seattle": { lat: 47.5952, lng: -122.3316 },
+            "Estadio de Atlanta": { lat: 33.7554, lng: -84.4009 },
+            "Estadio de Boston": { lat: 42.0909, lng: -71.2643 },
+            "Estadio de Houston": { lat: 29.6847, lng: -95.4107 },
+            "Estadio de Dallas": { lat: 32.7473, lng: -97.0945 },
+            "Estadio Nueva York / Nueva Jersey": { lat: 40.8135, lng: -74.0745 },
+            "Estadio de Kansas City": { lat: 39.0489, lng: -94.4852 },
+            "Estadio de Filadelfia": { lat: 39.9008, lng: -75.1675 },
+            "Estadio Bahía de San Francisco": { lat: 37.4030, lng: -121.9700 },
+            "Estadio de Miami": { lat: 25.9580, lng: -80.2389 },
+            "Estadio de Los Ángeles": { lat: 33.9535, lng: -118.3392 },
+            "Estadio de Toronto": { lat: 43.6332, lng: -79.4186 }
+        };
+
+        for (const [stadium, coords] of Object.entries(estadioCoords)) {
+            if (pais.estadio && pais.estadio.toLowerCase().includes(stadium.toLowerCase())) {
+                lat = coords.lat;
+                lng = coords.lng;
+                zoom = 12;
+                break;
+            }
+        }
+
+        map = L.map(mapContainer).setView([lat, lng], zoom);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "© OpenStreetMap contributors",
+            maxZoom: 19
+        }).addTo(map);
+
+        if (pais.estadio && pais.estadio !== "Por definir") {
+            L.marker([lat, lng]).addTo(map).bindPopup(`<strong>${pais.nombre}</strong><br>${pais.estadio}`);
+        }
+    }, 100);
 }
 
 function cerrarModal() {
     overlay.classList.remove("visible");
+    if (map) {
+        map.remove();
+        map = null;
+    }
 }
 
 document.getElementById("btn-cerrar").addEventListener("click", cerrarModal);
@@ -306,6 +454,7 @@ document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") cerrarModal();
 });
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/twemoji.min.js"></script>
 </body>
 </html>
