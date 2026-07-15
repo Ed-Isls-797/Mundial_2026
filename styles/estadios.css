@@ -125,3 +125,184 @@ p.intro {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(31, 95, 209, 0.45);
 }
+
+/* -------- Filtro -------- */
+.filtros {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0;
+    flex-wrap: wrap;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    padding: 14px 20px;
+    border-radius: 14px;
+    border: 1px solid var(--glass-border);
+}
+
+.filtros label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--gold-light);
+}
+
+.filtros select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    font-family: inherit;
+    background: rgba(10, 26, 60, 0.6);
+    color: var(--texto);
+    font-size: 0.9rem;
+    min-width: 160px;
+}
+
+.filtros select option {
+    background: var(--navy);
+    color: #fff;
+}
+
+/* -------- Modal de detalle -------- */
+.overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(4, 8, 20, 0.65);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 15px;
+}
+
+.overlay.visible {
+    display: flex;
+}
+
+.modal {
+    background: rgba(14, 26, 58, 0.85);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 20px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    color: var(--texto);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, rgba(18, 58, 122, 0.7), rgba(31, 95, 209, 0.45));
+    color: #fff;
+    padding: 22px 20px;
+    border-radius: 20px 20px 0 0;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+    position: relative;
+}
+
+.modal-header h3 {
+    margin: 0 0 4px;
+    font-size: 1.3rem;
+}
+
+.modal-header p {
+    margin: 0;
+    color: var(--gold-light);
+    font-size: 0.9rem;
+}
+
+.modal-header .cerrar {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    color: #fff;
+    font-size: 1.3rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: background 0.2s ease;
+}
+
+.modal-header .cerrar:hover {
+    background: rgba(212, 175, 55, 0.3);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.dato {
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dato:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.dato .etiqueta {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gold-light);
+    font-weight: 800;
+    margin-bottom: 6px;
+}
+
+.dato .valor {
+    color: var(--texto);
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+
+/* -------- Partidos dentro del modal -------- */
+.partido-mini {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+}
+
+.partido-mini-equipos {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.partido-mini-equipos .vs {
+    color: var(--gold-light);
+    font-weight: 800;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.partido-mini-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+    margin-top: 6px;
+}
+
+.partido-mini-boletos {
+    margin-top: 8px;
+    font-size: 0.75rem;
+    color: var(--gold-light);
+}
+

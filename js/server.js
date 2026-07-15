@@ -204,22 +204,6 @@ LEFT JOIN selecciones s ON gs.id_seleccion = s.id_seleccion`;
         res.json(grupos);
     });
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // 2b. Listado simple de grupos (id + letra), para selects/filtros del admin
 app.get('/api/grupos/lista', (req, res) => {
     db.query('SELECT id_grupo, nombre FROM grupos ORDER BY nombre', (err, results) => {
@@ -244,7 +228,7 @@ app.get('/api/fases', (req, res) => {
     });
 });
  
-// 3b. Obtener los estadios disponibles
+// 3b. Obtener los estadios disponibles (listado simple, para selects del admin)
 app.get('/api/estadios', (req, res) => {
     db.query('SELECT id_estadio, nombre, ciudad, pais, capacidad FROM estadios ORDER BY nombre', (err, results) => {
         if (err) {
@@ -252,6 +236,117 @@ app.get('/api/estadios', (req, res) => {
             return res.status(500).json({ error: 'Error al obtener los estadios' });
         }
         res.json(results);
+    });
+});
+
+// 3c. Módulo 2 - Estadios completos: ubicación (mapa), partidos que se juegan ahí,
+//     fechas/horarios y rango de costo de boletos por zona.
+app.get('/api/estadios/detalle', (req, res) => {
+    const queryEstadios = `
+        SELECT id_estadio, nombre, ciudad, pais, latitud, longitud, capacidad
+        FROM estadios
+        ORDER BY pais, ciudad
+    `;
+
+    db.query(queryEstadios, (err, estadios) => {
+        if (err) {
+            console.error('Error en la consulta:', err);
+            return res.status(500).json({ error: 'Error al obtener los estadios' });
+        }
+
+        if (!estadios.length) return res.json([]);
+
+        const queryPartidos = `
+            SELECT
+                p.id_partido,
+                p.id_estadio,
+                p.fecha,
+                f.nombre AS fase,
+                sl.nombre AS local,
+                sl.bandera AS bandera_local,
+                sv.nombre AS visitante,
+                sv.bandera AS bandera_visitante,
+                p.goles_local,
+                p.goles_visitante
+            FROM partidos p
+            INNER JOIN fases f ON p.id_fase = f.id_fase
+            INNER JOIN selecciones sl ON p.id_local = sl.id_seleccion
+            INNER JOIN selecciones sv ON p.id_visitante = sv.id_seleccion
+            ORDER BY p.fecha
+        `;
+
+        const queryBoletos = `
+            SELECT zb.id_partido, zb.zona, zb.precio, p.id_estadio
+            FROM zonas_boletos zb
+            INNER JOIN partidos p ON zb.id_partido = p.id_partido
+        `;
+
+        db.query(queryPartidos, (err2, partidos) => {
+            if (err2) {
+                console.error('Error en la consulta:', err2);
+                return res.status(500).json({ error: 'Error al obtener los partidos de los estadios' });
+            }
+
+            db.query(queryBoletos, (err3, boletos) => {
+                if (err3) {
+                    console.error('Error en la consulta:', err3);
+                    return res.status(500).json({ error: 'Error al obtener los boletos' });
+                }
+
+                const boletosPorPartido = {};
+                boletos.forEach(b => {
+                    if (!boletosPorPartido[b.id_partido]) boletosPorPartido[b.id_partido] = [];
+                    boletosPorPartido[b.id_partido].push({ zona: b.zona, precio: b.precio });
+                });
+
+                const preciosPorEstadio = {};
+                boletos.forEach(b => {
+                    if (!preciosPorEstadio[b.id_estadio]) preciosPorEstadio[b.id_estadio] = [];
+                    preciosPorEstadio[b.id_estadio].push(Number(b.precio));
+                });
+
+                const partidosPorEstadio = {};
+                partidos.forEach(p => {
+                    if (!partidosPorEstadio[p.id_estadio]) partidosPorEstadio[p.id_estadio] = [];
+                    partidosPorEstadio[p.id_estadio].push({
+                        id_partido: p.id_partido,
+                        fase: p.fase,
+                        local: p.local,
+                        bandera_local: p.bandera_local,
+                        visitante: p.visitante,
+                        bandera_visitante: p.bandera_visitante,
+                        fecha: p.fecha,
+                        goles_local: p.goles_local,
+                        goles_visitante: p.goles_visitante,
+                        estado: p.goles_local !== null && p.goles_visitante !== null ? 'jugado' : 'programado',
+                        boletos: boletosPorPartido[p.id_partido] || []
+                    });
+                });
+
+                const respuesta = estadios.map(e => {
+                    const precios = preciosPorEstadio[e.id_estadio] || [];
+                    return {
+                        id_estadio: e.id_estadio,
+                        nombre: e.nombre,
+                        ciudad: e.ciudad,
+                        pais: e.pais,
+                        latitud: e.latitud,
+                        longitud: e.longitud,
+                        capacidad: e.capacidad,
+                        google_maps_url: `https://www.google.com/maps/search/?api=1&query=${
+                            e.latitud != null && e.longitud != null
+                                ? `${e.latitud},${e.longitud}`
+                                : encodeURIComponent(`${e.nombre} ${e.ciudad} ${e.pais}`)
+                        }`,
+                        precio_min: precios.length ? Math.min(...precios) : null,
+                        precio_max: precios.length ? Math.max(...precios) : null,
+                        partidos: partidosPorEstadio[e.id_estadio] || []
+                    };
+                });
+
+                res.json(respuesta);
+            });
+        });
     });
 });
  

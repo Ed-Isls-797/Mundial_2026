@@ -7,6 +7,7 @@
 <title>Estadios - Mundial 2026</title>
 <link rel="stylesheet" href="../styles/sidebar.css">
 <link rel="stylesheet" href="../styles/estadios.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 </head>
 <body>
 <div class="page">
@@ -36,9 +37,199 @@
     </header>
 
     <main>
-        <p class="intro">Próximamente: listado de estadios, ubicación en mapa, partidos y costos de boletos.</p>
+        <h2>Ubicaciones de los estadios</h2>
+        <p class="intro">
+            Consulta la sede, su ubicación exacta en el mapa, los partidos que se jugarán
+            en cada estadio con su fecha y horario, y el rango de precios de los boletos disponibles.
+        </p>
+
+        <div class="filtros">
+            <label for="filtro-pais">País</label>
+            <select id="filtro-pais">
+                <option value="">Todos</option>
+            </select>
+        </div>
+
+        <div class="estadios-grid" id="estadios-grid">
+            <p class="intro">Cargando estadios...</p>
+        </div>
     </main>
   </div>
 </div>
+
+<!-- MODAL DE DETALLE DEL ESTADIO -->
+<div class="overlay" id="overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <button class="cerrar" id="btn-cerrar">&times;</button>
+            <h3 id="modal-nombre"></h3>
+            <p id="modal-ciudad"></p>
+        </div>
+        <div class="modal-body">
+            <div id="modal-mapa" style="width:100%; height:220px; border-radius:14px; overflow:hidden; margin-bottom:18px;"></div>
+
+            <div class="dato">
+                <span class="etiqueta">Capacidad</span>
+                <span class="valor" id="modal-capacidad"></span>
+            </div>
+            <div class="dato">
+                <span class="etiqueta">Rango de precio de boletos</span>
+                <span class="valor" id="modal-precio"></span>
+            </div>
+            <div class="dato">
+                <span class="etiqueta">Ver en Google Maps</span><br>
+                <a href="#" target="_blank" class="mapa-link" id="modal-mapa-link">Abrir mapa</a>
+            </div>
+
+            <div class="dato">
+                <span class="etiqueta">Partidos programados</span>
+                <div id="modal-partidos"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const API_URL = 'http://localhost:3000/api/estadios/detalle';
+const grid = document.getElementById('estadios-grid');
+const filtroPais = document.getElementById('filtro-pais');
+const overlay = document.getElementById('overlay');
+let estadios = [];
+let mapaModal = null;
+
+function formatearFecha(fechaISO) {
+    if (!fechaISO) return 'Por definir';
+    const fecha = new Date(fechaISO);
+    return fecha.toLocaleString('es-MX', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
+}
+
+function formatearPrecio(estadio) {
+    if (estadio.precio_min == null || estadio.precio_max == null) return 'Por anunciar';
+    const min = Number(estadio.precio_min).toLocaleString('es-MX', { style: 'currency', currency: 'USD' });
+    const max = Number(estadio.precio_max).toLocaleString('es-MX', { style: 'currency', currency: 'USD' });
+    return estadio.precio_min === estadio.precio_max ? min : `${min} - ${max}`;
+}
+
+async function cargarEstadios() {
+    try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error('Respuesta no válida');
+        estadios = await res.json();
+
+        const paises = [...new Set(estadios.map(e => e.pais))].sort();
+        paises.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p;
+            opt.textContent = p;
+            filtroPais.appendChild(opt);
+        });
+
+        renderizarGrid(estadios);
+    } catch (error) {
+        console.error('Error al cargar estadios:', error);
+        grid.innerHTML = '<p class="intro">No se pudieron cargar los estadios. Verifica que el servidor esté corriendo.</p>';
+    }
+}
+
+function renderizarGrid(lista) {
+    grid.innerHTML = '';
+    if (!lista.length) {
+        grid.innerHTML = '<p class="intro">No hay estadios para mostrar.</p>';
+        return;
+    }
+
+    lista.forEach(estadio => {
+        const card = document.createElement('article');
+        card.className = 'estadio-card';
+        card.innerHTML = `
+            <h3>${estadio.nombre}</h3>
+            <p class="ciudad">${estadio.ciudad}, ${estadio.pais}</p>
+            <div class="info-row"><span>Capacidad</span><strong>${estadio.capacidad ? estadio.capacidad.toLocaleString('es-MX') : 'N/D'}</strong></div>
+            <div class="info-row"><span>Partidos</span><strong>${estadio.partidos.length}</strong></div>
+            <div class="info-row"><span>Boletos</span><strong>${formatearPrecio(estadio)}</strong></div>
+            <a href="#" class="mapa-link ver-detalle">Ver detalle completo</a>
+        `;
+        card.querySelector('.ver-detalle').addEventListener('click', e => {
+            e.preventDefault();
+            abrirModal(estadio);
+        });
+        grid.appendChild(card);
+    });
+}
+
+filtroPais.addEventListener('change', () => {
+    const valor = filtroPais.value;
+    renderizarGrid(valor ? estadios.filter(e => e.pais === valor) : estadios);
+});
+
+function abrirModal(estadio) {
+    document.getElementById('modal-nombre').textContent = estadio.nombre;
+    document.getElementById('modal-ciudad').textContent = `${estadio.ciudad}, ${estadio.pais}`;
+    document.getElementById('modal-capacidad').textContent = estadio.capacidad
+        ? estadio.capacidad.toLocaleString('es-MX') + ' espectadores'
+        : 'No disponible';
+    document.getElementById('modal-precio').textContent = formatearPrecio(estadio);
+    document.getElementById('modal-mapa-link').href = estadio.google_maps_url;
+
+    const contPartidos = document.getElementById('modal-partidos');
+    if (!estadio.partidos.length) {
+        contPartidos.innerHTML = '<p class="valor">Aún no hay partidos asignados a este estadio.</p>';
+    } else {
+        contPartidos.innerHTML = estadio.partidos.map(p => `
+            <div class="partido-mini">
+                <div class="partido-mini-equipos">
+                    <span>${p.bandera_local || ''} ${p.local}</span>
+                    <span class="vs">${p.estado === 'jugado' ? `${p.goles_local} - ${p.goles_visitante}` : 'vs'}</span>
+                    <span>${p.visitante} ${p.bandera_visitante || ''}</span>
+                </div>
+                <div class="partido-mini-meta">
+                    <span>${p.fase}</span>
+                    <span>${formatearFecha(p.fecha)}</span>
+                </div>
+                ${p.boletos.length ? `<div class="partido-mini-boletos">${p.boletos.map(b => `<span>${b.zona}: $${Number(b.precio).toLocaleString('es-MX')}</span>`).join(' · ')}</div>` : ''}
+            </div>
+        `).join('');
+    }
+
+    overlay.classList.add('visible');
+
+    setTimeout(() => {
+        if (estadio.latitud && estadio.longitud) {
+            if (mapaModal) {
+                mapaModal.remove();
+                mapaModal = null;
+            }
+            mapaModal = L.map('modal-mapa').setView([estadio.latitud, estadio.longitud], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(mapaModal);
+            L.marker([estadio.latitud, estadio.longitud]).addTo(mapaModal)
+                .bindPopup(estadio.nombre).openPopup();
+        } else {
+            document.getElementById('modal-mapa').innerHTML = '<p class="valor" style="padding:16px;">Ubicación no disponible</p>';
+        }
+    }, 50);
+}
+
+function cerrarModal() {
+    overlay.classList.remove('visible');
+    if (mapaModal) {
+        mapaModal.remove();
+        mapaModal = null;
+    }
+}
+
+document.getElementById('btn-cerrar').addEventListener('click', cerrarModal);
+overlay.addEventListener('click', e => { if (e.target === overlay) cerrarModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
+
+cargarEstadios();
+</script>
+
 </body>
 </html>
+
