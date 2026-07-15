@@ -153,6 +153,17 @@ function getFlagImageCandidates(flagValue, countryName) {
 
     const clean = normalizeName(countryName);
     const lower = clean.toLowerCase();
+    const aliasMap = {
+        'bosnia y herzegovina': ['boznia', 'bosnia', 'bosnia_y_herzegovina', 'bosnia-herzegovina'],
+        'chequia': ['republica_checa', 'czechia', 'czech_republic'],
+        'qatar': ['catar'],
+        'irak': ['iraq'],
+        'republica democratica del congo': ['rd_congo', 'rdcongo', 'congo_democratico', 'republica_democratica_del_congo'],
+        'paises bajos': ['paises_bajos', 'holanda', 'netherlands'],
+        'corea del sur': ['corea_sur', 'south_korea'],
+        'arabia saudita': ['arabia_saudi', 'saudi_arabia'],
+        'costa de marfil': ['costa_marfil', 'ivory_coast']
+    };
 
     if (clean) {
         const bases = [
@@ -160,7 +171,8 @@ function getFlagImageCandidates(flagValue, countryName) {
             lower.replace(/\s+/g, "_"),
             clean.replace(/\s+/g, "_"),
             clean.replace(/\s+/g, "-"),
-            lower.replace(/\s+/g, "")
+            lower.replace(/\s+/g, ""),
+            ...((aliasMap[lower] || []))
         ];
         const exts = ["png", "jpg", "jpeg", "webp", "svg"];
 
