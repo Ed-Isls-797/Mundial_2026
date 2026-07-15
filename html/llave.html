@@ -37,7 +37,7 @@
 <main>
     <p class="intro">
         Esta llave muestra la <strong>progresión real de los ganadores</strong>. 
-        Muestra <strong>Dieciseisavos, Octavos y Cuartos de final</strong>.
+        Muestra <strong>Dieciseisavos, Octavos, Cuartos, Semifinales, Tercer lugar y Final</strong>.
         Los partidos pendientes se muestran con <strong>"Por definir"</strong>.
     </p>
 
@@ -139,6 +139,19 @@
         return null;
     }
 
+    function obtenerPerdedor(partido) {
+        if (partido.goles_local === null || partido.goles_visitante === null) return null;
+
+        if (partido.penales_local !== null && partido.penales_visitante !== null) {
+            if (partido.penales_local > partido.penales_visitante) return partido.id_visitante;
+            if (partido.penales_visitante > partido.penales_local) return partido.id_local;
+        }
+
+        if (partido.goles_local > partido.goles_visitante) return partido.id_visitante;
+        if (partido.goles_visitante > partido.goles_local) return partido.id_local;
+        return null;
+    }
+
     function obtenerNombre(id, seleccionesMap) {
         return seleccionesMap[id] ? seleccionesMap[id].nombre : 'Desconocido';
     }
@@ -190,7 +203,8 @@
             local_bandera: local ? local.bandera : (partido.bandera_local || ''),
             visitante_bandera: visitante ? visitante.bandera : (partido.bandera_visitante || ''),
             estadio: partido.estadio || null,
-            ganador: obtenerGanador(partido)
+            ganador: obtenerGanador(partido),
+            perdedor: obtenerPerdedor(partido)
         };
     }
 
@@ -223,6 +237,58 @@
         }
 
         return partidosGenerados;
+    }
+
+    function generarTercerLugarDesdeSemis(partidosSemis, inicioId, seleccionesMap) {
+        const perdedores = partidosSemis.map(p => p.perdedor);
+        const idLocal = perdedores[0] || null;
+        const idVisitante = perdedores[1] || null;
+
+        return [{
+            id_partido: inicioId,
+            id_fase: 6,
+            id_local: idLocal,
+            id_visitante: idVisitante,
+            goles_local: null,
+            goles_visitante: null,
+            penales_local: null,
+            penales_visitante: null,
+            fecha: null,
+            estadio: null,
+            local_nombre: idLocal ? obtenerNombre(idLocal, seleccionesMap) : 'Por definir',
+            visitante_nombre: idVisitante ? obtenerNombre(idVisitante, seleccionesMap) : 'Por definir',
+            local_bandera: idLocal ? obtenerBandera(idLocal, seleccionesMap) : '',
+            visitante_bandera: idVisitante ? obtenerBandera(idVisitante, seleccionesMap) : '',
+            ganador: null,
+            perdedor: null,
+            es_generado: true
+        }];
+    }
+
+    function generarFinalDesdeSemis(partidosSemis, inicioId, seleccionesMap) {
+        const ganadores = partidosSemis.map(p => p.ganador);
+        const idLocal = ganadores[0] || null;
+        const idVisitante = ganadores[1] || null;
+
+        return [{
+            id_partido: inicioId,
+            id_fase: 7,
+            id_local: idLocal,
+            id_visitante: idVisitante,
+            goles_local: null,
+            goles_visitante: null,
+            penales_local: null,
+            penales_visitante: null,
+            fecha: null,
+            estadio: null,
+            local_nombre: idLocal ? obtenerNombre(idLocal, seleccionesMap) : 'Por definir',
+            visitante_nombre: idVisitante ? obtenerNombre(idVisitante, seleccionesMap) : 'Por definir',
+            local_bandera: idLocal ? obtenerBandera(idLocal, seleccionesMap) : '',
+            visitante_bandera: idVisitante ? obtenerBandera(idVisitante, seleccionesMap) : '',
+            ganador: null,
+            perdedor: null,
+            es_generado: true
+        }];
     }
 
     function slugifyName(value) {
@@ -308,7 +374,7 @@
 
     function construirLlave(fases, partidos, seleccionesMap) {
         const mapaFasesPorNombre = crearMapaFasesPorNombre(fases);
-        const fasesObjetivoIds = [2, 3, 4]; // Formato solicitado: 16vos, 8vos y cuartos
+        const fasesObjetivoIds = [2, 3, 4, 5, 6, 7];
         const fasesObjetivo = fases
             .filter(f => fasesObjetivoIds.includes(Number(f.id_fase)))
             .sort((a, b) => a.orden - b.orden);
@@ -325,16 +391,25 @@
 
         const llaveConstruida = [];
 
-        let partidosPrevios = [];
+        let partidosDieciseisavos = [];
+        let partidosOctavos = [];
+        let partidosCuartos = [];
+        let partidosSemis = [];
 
         fasesObjetivo.forEach(fase => {
             let partidosDeFase = partidosEnriquecidos.filter(p => Number(p.id_fase) === Number(fase.id_fase));
 
             if (partidosDeFase.length === 0) {
-                if (Number(fase.id_fase) === 3 && partidosPrevios.length > 0) {
-                    partidosDeFase = generarFaseDesdeGanadores(3, partidosPrevios, 1000, seleccionesMap);
-                } else if (Number(fase.id_fase) === 4 && partidosPrevios.length > 0) {
-                    partidosDeFase = generarFaseDesdeGanadores(4, partidosPrevios, 2000, seleccionesMap);
+                if (Number(fase.id_fase) === 3 && partidosDieciseisavos.length > 0) {
+                    partidosDeFase = generarFaseDesdeGanadores(3, partidosDieciseisavos, 1000, seleccionesMap);
+                } else if (Number(fase.id_fase) === 4 && partidosOctavos.length > 0) {
+                    partidosDeFase = generarFaseDesdeGanadores(4, partidosOctavos, 2000, seleccionesMap);
+                } else if (Number(fase.id_fase) === 5 && partidosCuartos.length > 0) {
+                    partidosDeFase = generarFaseDesdeGanadores(5, partidosCuartos, 3000, seleccionesMap);
+                } else if (Number(fase.id_fase) === 6 && partidosSemis.length > 0) {
+                    partidosDeFase = generarTercerLugarDesdeSemis(partidosSemis, 6000, seleccionesMap);
+                } else if (Number(fase.id_fase) === 7 && partidosSemis.length > 0) {
+                    partidosDeFase = generarFinalDesdeSemis(partidosSemis, 7000, seleccionesMap);
                 }
             }
 
@@ -343,7 +418,10 @@
                 partidos: partidosDeFase
             });
 
-            partidosPrevios = partidosDeFase;
+            if (Number(fase.id_fase) === 2) partidosDieciseisavos = partidosDeFase;
+            if (Number(fase.id_fase) === 3) partidosOctavos = partidosDeFase;
+            if (Number(fase.id_fase) === 4) partidosCuartos = partidosDeFase;
+            if (Number(fase.id_fase) === 5) partidosSemis = partidosDeFase;
         });
 
         return llaveConstruida;
