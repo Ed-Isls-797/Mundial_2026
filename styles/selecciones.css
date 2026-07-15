@@ -217,7 +217,7 @@
 .team-card-header .team-flag .flag-image {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
 }
 
 .team-card-header h3 {
@@ -349,7 +349,7 @@
 .modal-flag .flag-image {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
 }
 
 .modal-header h3 {

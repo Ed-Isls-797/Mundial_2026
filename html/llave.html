@@ -325,12 +325,14 @@
 
         const clean = normalizeName(teamName);
         const lower = clean.toLowerCase();
+        const rawClean = (teamName || '').toString().trim();
+        const rawLower = rawClean.toLowerCase();
         const aliasMap = {
             'bosnia y herzegovina': ['boznia', 'bosnia', 'bosnia_y_herzegovina', 'bosnia-herzegovina'],
             'chequia': ['republica_checa', 'czechia', 'czech_republic'],
             'qatar': ['catar'],
             'irak': ['iraq'],
-            'republica democratica del congo': ['rd_congo', 'rdcongo', 'congo_democratico', 'republica_democratica_del_congo'],
+            'republica democratica del congo': ['rd_congo', 'rdcongo', 'congo_democratico', 'republica_democratica_del_congo', 'congo'],
             'paises bajos': ['paises_bajos', 'holanda', 'netherlands'],
             'corea del sur': ['corea_sur', 'south_korea'],
             'arabia saudita': ['arabia_saudi', 'saudi_arabia'],
@@ -341,9 +343,16 @@
             const bases = [
                 lower.replace(/\s+/g, '-'),
                 lower.replace(/\s+/g, '_'),
+                rawLower.replace(/\s+/g, '-'),
+                rawLower.replace(/\s+/g, '_'),
+                rawLower,
                 clean.replace(/\s+/g, '_'),
                 clean.replace(/\s+/g, '-'),
+                rawClean.replace(/\s+/g, '_'),
+                rawClean.replace(/\s+/g, '-'),
+                rawClean,
                 lower.replace(/\s+/g, ''),
+                rawLower.replace(/\s+/g, ''),
                 ...((aliasMap[lower] || []))
             ];
             const exts = ['png', 'jpg', 'jpeg', 'webp', 'svg'];
