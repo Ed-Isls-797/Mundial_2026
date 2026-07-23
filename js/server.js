@@ -601,44 +601,322 @@ function recalcularClasificacion(idGrupo, callback) {
         db.query(upsert, [valores], (err2) => callback(err2));
     });
 }
+// =====================================================================
+// MÓDULO DE SIMULACIÓN - 10 CONSULTAS PARA EL SISTEMA DE SIMULACIÓN
+// =====================================================================
 
+// Obtener lista de selecciones para los selects (ya lo tienes, pero lo incluyo por si acaso)
+app.get('/api/simulacion/selecciones-lista', (req, res) => {
+    db.query('SELECT id_seleccion, nombre, bandera FROM selecciones ORDER BY nombre', (err, results) => {
+        if (err) {
+            console.error('Error al obtener lista de selecciones:', err);
+            return res.status(500).json({ error: 'Error al obtener las selecciones' });
+        }
+        res.json(results);
+    });
+});
 
+// 1. Tabla general del grupo con estadísticas completas
+app.get('/api/simulacion/consulta1', (req, res) => {
+    const query = `
+        SELECT
+            g.nombre AS grupo,
+            s.nombre AS seleccion,
+            s.bandera,
+            c.nombre AS continente,
+            e.ranking_fifa,
+            cl.PJ AS partidos_jugados,
+            cl.PG AS ganados,
+            cl.PE AS empatados,
+            cl.PP AS perdidos,
+            cl.GF AS goles_favor,
+            cl.GC AS goles_contra,
+            cl.DG AS diferencia_goles,
+            cl.Pts AS puntos
+        FROM clasificaciones cl
+        JOIN grupos g ON g.id_grupo = cl.id_grupo
+        JOIN selecciones s ON s.id_seleccion = cl.id_seleccion
+        JOIN continentes c ON c.id_continente = s.id_continente
+        LEFT JOIN estadisticas_seleccion e ON e.id_seleccion = s.id_seleccion
+        ORDER BY g.nombre, cl.Pts DESC, cl.DG DESC
+    `;
 
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error en consulta 1:', err);
+            return res.status(500).json({ error: 'Error al obtener la tabla de grupos' });
+        }
+        res.json(results);
+    });
+});
 
+// 2. Historial completo de una selección
+app.get('/api/simulacion/consulta2/:id', (req, res) => {
+    const { id } = req.params;
+    
+    const query = `
+        SELECT
+            s.nombre AS seleccion,
+            s.bandera,
+            s_riv.nombre AS rival,
+            s_riv.bandera AS bandera_rival,
+            CASE WHEN h.seleccion_a = ? THEN h.victorias_a ELSE h.victorias_b END AS victorias,
+            h.empates,
+            CASE WHEN h.seleccion_a = ? THEN h.victorias_b ELSE h.victorias_a END AS derrotas,
+            CASE WHEN h.seleccion_a = ? THEN h.goles_a ELSE h.goles_b END AS goles_anotados,
+            CASE WHEN h.seleccion_a = ? THEN h.goles_b ELSE h.goles_a END AS goles_recibidos,
+            h.ultimo_partido
+        FROM historial_enfrentamientos h
+        JOIN selecciones s ON s.id_seleccion = ?
+        JOIN selecciones s_riv ON s_riv.id_seleccion = IF(h.seleccion_a = ?, h.seleccion_b, h.seleccion_a)
+        WHERE ? IN (h.seleccion_a, h.seleccion_b)
+        ORDER BY h.ultimo_partido DESC
+    `;
 
+    db.query(query, [id, id, id, id, id, id, id], (err, results) => {
+        if (err) {
+            console.error('Error en consulta 2:', err);
+            return res.status(500).json({ error: 'Error al obtener el historial de la selección' });
+        }
+        res.json(results);
+    });
+});
 
+// 3. Selecciones con mejor rendimiento ofensivo
+app.get('/api/simulacion/consulta3', (req, res) => {
+    const query = `
+        SELECT
+            s.nombre AS seleccion,
+            s.bandera,
+            ROUND(e.goles_favor / NULLIF(e.partidos_jugados, 0), 2) AS promedio_goles,
+            e.tiros_porteria AS promedio_tiros,
+            e.posesion_promedio AS posesion
+        FROM estadisticas_seleccion e
+        JOIN selecciones s ON s.id_seleccion = e.id_seleccion
+        ORDER BY promedio_goles DESC
+    `;
 
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error en consulta 3:', err);
+            return res.status(500).json({ error: 'Error al obtener el rendimiento ofensivo' });
+        }
+        res.json(results);
+    });
+});
 
+// 4. Estadios con más partidos programados
+app.get('/api/simulacion/consulta4', (req, res) => {
+    const query = `
+        SELECT
+            est.nombre AS estadio,
+            est.ciudad,
+            COUNT(DISTINCT p.id_partido) AS partidos_programados,
+            (SELECT COUNT(*) FROM zonas_boletos zb WHERE zb.id_partido IN
+                (SELECT id_partido FROM partidos WHERE id_estadio = est.id_estadio)) AS zonas_boletos_totales,
+            GROUP_CONCAT(DISTINCT CONCAT(sl.nombre, ' vs ', sv.nombre) SEPARATOR ' | ') AS partidos_jugados_lista
+        FROM estadios est
+        JOIN partidos p ON p.id_estadio = est.id_estadio
+        JOIN selecciones sl ON sl.id_seleccion = p.id_local
+        JOIN selecciones sv ON sv.id_seleccion = p.id_visitante
+        GROUP BY est.id_estadio, est.nombre, est.ciudad
+        ORDER BY partidos_programados DESC
+    `;
 
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error en consulta 4:', err);
+            return res.status(500).json({ error: 'Error al obtener los estadios' });
+        }
+        res.json(results);
+    });
+});
 
+// 5. Historial de todos los partidos de una selección con su estadio
+app.get('/api/simulacion/consulta5/:id', (req, res) => {
+    const { id } = req.params;
+    
+    const query = `
+        SELECT
+            s.nombre AS seleccion,
+            s.bandera,
+            DATE_FORMAT(p.fecha, '%Y-%m-%d %H:%i') AS fecha,
+            IF(p.id_local = ?, sv.nombre, sl.nombre) AS rival,
+            est.nombre AS estadio,
+            est.ciudad,
+            CONCAT(p.goles_local, ' - ', p.goles_visitante) AS resultado
+        FROM partidos p
+        JOIN selecciones s ON s.id_seleccion = ?
+        JOIN selecciones sl ON sl.id_seleccion = p.id_local
+        JOIN selecciones sv ON sv.id_seleccion = p.id_visitante
+        JOIN estadios est ON est.id_estadio = p.id_estadio
+        WHERE ? IN (p.id_local, p.id_visitante)
+        ORDER BY p.fecha
+    `;
 
+    db.query(query, [id, id, id], (err, results) => {
+        if (err) {
+            console.error('Error en consulta 5:', err);
+            return res.status(500).json({ error: 'Error al obtener el historial de partidos' });
+        }
+        res.json(results);
+    });
+});
 
+// 6. Selecciones con mayor experiencia mundialista
+app.get('/api/simulacion/consulta6', (req, res) => {
+    const query = `
+        SELECT
+            s.nombre AS seleccion,
+            s.bandera,
+            e.ranking_fifa,
+            e.partidos_jugados,
+            e.partidos_ganados,
+            e.partidos_perdidos,
+            e.partidos_empatados,
+            e.titulos_mundiales,
+            e.experiencia_mundiales
+        FROM estadisticas_seleccion e
+        JOIN selecciones s ON s.id_seleccion = e.id_seleccion
+        ORDER BY e.partidos_ganados DESC, e.ranking_fifa ASC
+    `;
 
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error en consulta 6:', err);
+            return res.status(500).json({ error: 'Error al obtener la experiencia mundialista' });
+        }
+        res.json(results);
+    });
+});
 
+// 7. Fuerza inicial = Ranking + Promedio goles + Posesión - Goles recibidos
+app.get('/api/simulacion/consulta7', (req, res) => {
+    const query = `
+        SELECT
+            s.nombre AS seleccion,
+            s.bandera,
+            e.ranking_fifa,
+            ROUND(e.goles_favor / NULLIF(e.partidos_jugados, 0), 2) AS promedio_goles,
+            e.posesion_promedio AS posesion,
+            ROUND(e.goles_contra / NULLIF(e.partidos_jugados, 0), 2) AS promedio_goles_recibidos,
+            ROUND(
+                (100 - COALESCE(e.ranking_fifa, 100))
+                + (e.goles_favor / NULLIF(e.partidos_jugados, 0))
+                + e.posesion_promedio
+                - (e.goles_contra / NULLIF(e.partidos_jugados, 0))
+            , 2) AS fuerza_inicial
+        FROM estadisticas_seleccion e
+        JOIN selecciones s ON s.id_seleccion = e.id_seleccion
+        ORDER BY fuerza_inicial DESC
+    `;
 
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error en consulta 7:', err);
+            return res.status(500).json({ error: 'Error al calcular la fuerza inicial' });
+        }
+        res.json(results);
+    });
+});
 
+// 8. Precio promedio de boletos por estadio
+app.get('/api/simulacion/consulta8', (req, res) => {
+    const query = `
+        SELECT
+            est.nombre AS estadio,
+            p.id_partido,
+            sl.nombre AS local,
+            sv.nombre AS visitante,
+            zb.zona,
+            ROUND(AVG(zb.precio), 2) AS precio_promedio,
+            MIN(zb.precio) AS precio_minimo,
+            MAX(zb.precio) AS precio_maximo
+        FROM zonas_boletos zb
+        JOIN partidos p ON p.id_partido = zb.id_partido
+        JOIN estadios est ON est.id_estadio = p.id_estadio
+        JOIN selecciones sl ON sl.id_seleccion = p.id_local
+        JOIN selecciones sv ON sv.id_seleccion = p.id_visitante
+        GROUP BY est.id_estadio, est.nombre, p.id_partido, sl.nombre, sv.nombre, zb.zona
+        ORDER BY est.nombre, p.id_partido, precio_promedio DESC
+    `;
 
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error en consulta 8:', err);
+            return res.status(500).json({ error: 'Error al obtener los precios de boletos' });
+        }
+        res.json(results);
+    });
+});
 
+// 9. Ranking por continente
+app.get('/api/simulacion/consulta9', (req, res) => {
+    const query = `
+        SELECT
+            e.ranking_fifa,
+            c.nombre AS continente,
+            s.nombre AS seleccion,
+            s.bandera,
+            e.valor_plantilla,
+            e.edad_promedio
+        FROM selecciones s
+        JOIN continentes c ON c.id_continente = s.id_continente
+        LEFT JOIN estadisticas_seleccion e ON e.id_seleccion = s.id_seleccion
+        ORDER BY c.nombre, e.ranking_fifa ASC
+    `;
 
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error en consulta 9:', err);
+            return res.status(500).json({ error: 'Error al obtener el ranking por continente' });
+        }
+        res.json(results);
+    });
+});
 
+// 10. Consulta maestra para el simulador
+app.get('/api/simulacion/consulta10', (req, res) => {
+    const query = `
+        SELECT
+            p.id_partido,
+            sl.nombre AS equipo_local,
+            sv.nombre AS equipo_visitante,
+            g.nombre AS grupo,
+            el.ranking_fifa AS ranking_local,
+            ev.ranking_fifa AS ranking_visitante,
+            ROUND(el.goles_favor / NULLIF(el.partidos_jugados, 0), 2) AS goles_promedio_local,
+            ROUND(ev.goles_favor / NULLIF(ev.partidos_jugados, 0), 2) AS goles_promedio_visitante,
+            el.posesion_promedio AS posesion_local,
+            ev.posesion_promedio AS posesion_visitante,
+            h.victorias_a,
+            h.victorias_b,
+            h.empates AS empates_historicos,
+            est.nombre AS estadio,
+            est.ciudad,
+            est.capacidad
+        FROM partidos p
+        JOIN selecciones sl ON sl.id_seleccion = p.id_local
+        JOIN selecciones sv ON sv.id_seleccion = p.id_visitante
+        LEFT JOIN grupo_selecciones gs ON gs.id_seleccion = sl.id_seleccion
+        LEFT JOIN grupos g ON g.id_grupo = gs.id_grupo
+        LEFT JOIN estadisticas_seleccion el ON el.id_seleccion = sl.id_seleccion
+        LEFT JOIN estadisticas_seleccion ev ON ev.id_seleccion = sv.id_seleccion
+        LEFT JOIN historial_enfrentamientos h
+            ON h.seleccion_a = LEAST(p.id_local, p.id_visitante)
+           AND h.seleccion_b = GREATEST(p.id_local, p.id_visitante)
+        JOIN estadios est ON est.id_estadio = p.id_estadio
+        ORDER BY p.fecha
+    `;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error en consulta 10:', err);
+            return res.status(500).json({ error: 'Error al obtener la consulta maestra' });
+        }
+        res.json(results);
+    });
+});
 
 // Levantar el servidor
 app.listen(PORT, () => {

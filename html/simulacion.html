@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mundial 2026</title>
+    <title>Mundial 2026 - Simulación</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -11,6 +11,9 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../styles/index.css" />
+    <link rel="stylesheet" href="../styles/simulacion.css" />
+
+
   </head>
   <body>
     <div class="page">
@@ -28,20 +31,544 @@
             <li><a href="calendario.html">Calendario</a></li>
             <li><a href="resultados.html">Resultados</a></li>
             <li><a href="llave.html">Llave</a></li>
-            <li><a href="simulacion.html">simulacion</a></li>
+            <li><a href="simulacion.html" class="active">Simulación</a></li>
           </ul>
         </nav>
       </aside>
 
-      
+      <main class="main-content">
+        <div class="simulacion-container">
+          <div class="simulacion-header">
+            <h1>🎯 Sistema de Simulación</h1>
+            <p>10 consultas para el simulador de partidos (Monte Carlo, Poisson, Elo, ML)</p>
+          </div>
 
+          <!-- Grid de tarjetas de consultas -->
+          <div class="consulta-grid" id="consultaGrid">
+            <!-- Las tarjetas se generan con JavaScript -->
+          </div>
 
-
-
-
-
-
-
+          <!-- Área de resultados -->
+          <div class="resultados-area" id="resultadosArea">
+            <div class="placeholder">
+              <span class="icono">📊</span>
+              <h4>Selecciona una consulta</h4>
+              <p>Haz clic en "Ejecutar" en cualquiera de las tarjetas para ver los resultados aquí</p>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
+
+
+    <script>
+  // ================================================================
+  // CONFIGURACIÓN - URL BASE DEL BACKEND
+  // ================================================================
+  // Cambia esta URL según dónde esté corriendo tu servidor
+const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
+
+  console.log('🌐 API_BASE:', API_BASE);
+
+  // ================================================================
+  // CONFIGURACIÓN DE LAS CONSULTAS
+  // ================================================================
+  const CONSULTAS = [
+    {
+      id: 1,
+      titulo: 'Tabla general del grupo con estadísticas completas',
+      descripcion: '✅ Datos 100% reales — Posiciones, puntos, goles y diferencia por grupo',
+      badge: 'REAL',
+      badgeClass: 'badge-real',
+      endpoint: `${API_BASE}/api/simulacion/consulta1`,
+      necesitaSeleccion: false,
+      columnas: ['grupo', 'seleccion', 'continente', 'ranking_fifa', 'partidos_jugados', 'ganados', 'empatados', 'perdidos', 'goles_favor', 'goles_contra', 'diferencia_goles', 'puntos']
+    },
+    {
+      id: 2,
+      titulo: 'Historial completo de una selección',
+      descripcion: '✅ Datos 100% reales — Victorias, empates, derrotas y goles contra cada rival',
+      badge: 'REAL',
+      badgeClass: 'badge-real',
+      endpoint: `${API_BASE}/api/simulacion/consulta2`,
+      necesitaSeleccion: true,
+      columnas: ['seleccion', 'rival', 'victorias', 'empates', 'derrotas', 'goles_anotados', 'goles_recibidos', 'ultimo_partido']
+    },
+    {
+      id: 3,
+      titulo: 'Selecciones con mejor rendimiento ofensivo',
+      descripcion: '⚠️ Promedio de goles real — Tiros y posesión son estimados',
+      badge: 'ESTIMADO',
+      badgeClass: 'badge-estimado',
+      endpoint: `${API_BASE}/api/simulacion/consulta3`,
+      necesitaSeleccion: false,
+      columnas: ['seleccion', 'promedio_goles', 'promedio_tiros', 'posesion']
+    },
+    {
+      id: 4,
+      titulo: 'Estadios con más partidos programados',
+      descripcion: '✅ Datos 100% reales — Cantidad de partidos y lista de enfrentamientos por estadio',
+      badge: 'REAL',
+      badgeClass: 'badge-real',
+      endpoint: `${API_BASE}/api/simulacion/consulta4`,
+      necesitaSeleccion: false,
+      columnas: ['estadio', 'ciudad', 'partidos_programados', 'zonas_boletos_totales', 'partidos_jugados_lista']
+    },
+    {
+      id: 5,
+      titulo: 'Historial de todos los partidos de una selección',
+      descripcion: '✅ Datos 100% reales — Partidos jugados, estadio, ciudad y resultado',
+      badge: 'REAL',
+      badgeClass: 'badge-real',
+      endpoint: `${API_BASE}/api/simulacion/consulta5`,
+      necesitaSeleccion: true,
+      columnas: ['seleccion', 'fecha', 'rival', 'estadio', 'ciudad', 'resultado']
+    },
+    {
+      id: 6,
+      titulo: 'Selecciones con mayor experiencia mundialista',
+      descripcion: '⚠️ Partidos jugados reales — Títulos y experiencia son estimados',
+      badge: 'ESTIMADO',
+      badgeClass: 'badge-estimado',
+      endpoint: `${API_BASE}/api/simulacion/consulta6`,
+      necesitaSeleccion: false,
+      columnas: ['seleccion', 'ranking_fifa', 'partidos_jugados', 'partidos_ganados', 'partidos_perdidos', 'partidos_empatados', 'titulos_mundiales', 'experiencia_mundiales']
+    },
+    {
+      id: 7,
+      titulo: 'Fuerza inicial de cada selección',
+      descripcion: '⚠️ Ranking + Promedio goles + Posesión - Goles recibidos ',
+      badge: 'ESTIMADO',
+      badgeClass: 'badge-estimado',
+      endpoint: `${API_BASE}/api/simulacion/consulta7`,
+      necesitaSeleccion: false,
+      columnas: ['seleccion', 'ranking_fifa', 'promedio_goles', 'posesion', 'promedio_goles_recibidos', 'fuerza_inicial']
+    },
+    {
+      id: 8,
+      titulo: 'Precio promedio de boletos por estadio',
+      descripcion: '✅ Datos 100% reales — Precio promedio, mínimo y máximo por zona y partido',
+      badge: 'REAL',
+      badgeClass: 'badge-real',
+      endpoint: `${API_BASE}/api/simulacion/consulta8`,
+      necesitaSeleccion: false,
+      columnas: ['estadio', 'id_partido', 'local', 'visitante', 'zona', 'precio_promedio', 'precio_minimo', 'precio_maximo']
+    },
+    {
+      id: 9,
+      titulo: 'Ranking por continente',
+      descripcion: '⚠️ Ranking real — Valor de plantilla y edad estimados',
+      badge: 'ESTIMADO',
+      badgeClass: 'badge-estimado',
+      endpoint: `${API_BASE}/api/simulacion/consulta9`,
+      necesitaSeleccion: false,
+      columnas: ['ranking_fifa', 'continente', 'seleccion', 'valor_plantilla', 'edad_promedio']
+    },
+    {
+      id: 10,
+      titulo: 'Consulta maestra para el simulador',
+      descripcion: '⚠️  Datos completos para simulación',
+      badge: 'ESTIMADO',
+      badgeClass: 'badge-estimado',
+      endpoint: `${API_BASE}/api/simulacion/consulta10`,
+      necesitaSeleccion: false,
+      columnas: ['id_partido', 'equipo_local', 'equipo_visitante', 'grupo', 'ranking_local', 'ranking_visitante', 'goles_promedio_local', 'goles_promedio_visitante', 'posesion_local', 'posesion_visitante', 'victorias_a', 'victorias_b', 'empates_historicos', 'estadio', 'ciudad', 'capacidad']
+    }
+  ];
+
+  // ================================================================
+  // ESTADO GLOBAL
+  // ================================================================
+  let selecciones = [];
+  let seleccionSeleccionada = {};
+
+  // ================================================================
+  // FUNCIONES AUXILIARES
+  // ================================================================
+  function getBanderaUrl(bandera) {
+    if (!bandera) return '';
+    if (bandera.startsWith('http') || bandera.startsWith('/')) {
+      return bandera;
+    }
+    return `${API_BASE}/uploads/${bandera}`;
+  }
+
+  function formatearFecha(fecha) {
+    if (!fecha) return '—';
+    const d = new Date(fecha);
+    return d.toLocaleString('es-MX', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  // ================================================================
+  // CARGAR LISTA DE SELECCIONES
+  // ================================================================
+  async function cargarSelecciones() {
+    try {
+      console.log('🔄 Cargando selecciones...');
+      console.log('📡 URL:', `${API_BASE}/api/simulacion/selecciones-lista`);
+      
+      const resp = await fetch(`${API_BASE}/api/simulacion/selecciones-lista`);
+      console.log('📡 Respuesta recibida:', resp.status, resp.statusText);
+      
+      if (!resp.ok) {
+        const errorText = await resp.text();
+        console.error('❌ Error en la respuesta:', errorText);
+        throw new Error(`Error ${resp.status}: ${resp.statusText}`);
+      }
+      
+      selecciones = await resp.json();
+      console.log('✅ Selecciones cargadas:', selecciones.length);
+      console.log('📌 Primera selección:', selecciones[0]?.nombre);
+      
+      // Seleccionar la primera por defecto
+      if (selecciones.length > 0) {
+        seleccionSeleccionada = selecciones[0];
+      }
+      
+      // Renderizar las tarjetas
+      renderizarTarjetas();
+      
+      // Ocultar mensaje de error si existía
+      const area = document.getElementById('resultadosArea');
+      if (area.querySelector('.no-datos[style*="color: #dc3545"]')) {
+        area.innerHTML = `
+          <div class="placeholder">
+            <span class="icono">📊</span>
+            <h4>Selecciona una consulta</h4>
+            <p>Haz clic en "Ejecutar" en cualquiera de las tarjetas para ver los resultados aquí</p>
+          </div>
+        `;
+      }
+      
+    } catch (error) {
+      console.error('❌ Error cargando selecciones:', error);
+      const area = document.getElementById('resultadosArea');
+      area.innerHTML = `
+        <div class="no-datos" style="color: #dc3545;">
+          <span class="icono">❌</span>
+          <p style="font-weight: 600;">Error de conexión con el servidor</p>
+          <p style="font-size: 14px; color: #666;">${error.message}</p>
+          <p style="font-size: 13px; color: #999; margin-top: 12px;">
+            Verifica que el servidor esté corriendo en <strong>${API_BASE}</strong>
+          </p>
+        </div>
+      `;
+      renderizarTarjetas();
+    }
+  }
+
+  // ================================================================
+  // RENDERIZAR TARJETAS DE CONSULTAS
+  // ================================================================
+  function renderizarTarjetas() {
+    const grid = document.getElementById('consultaGrid');
+    grid.innerHTML = '';
+
+    CONSULTAS.forEach(consulta => {
+      const card = document.createElement('div');
+      card.className = 'consulta-card';
+
+      let selectorHTML = '';
+      if (consulta.necesitaSeleccion) {
+        selectorHTML = `
+          <div class="selector-wrapper">
+            <label for="select_${consulta.id}">Seleccionar selección:</label>
+            <select id="select_${consulta.id}" data-consulta="${consulta.id}">
+              ${selecciones.length === 0 ? '<option value="">Cargando selecciones...</option>' : ''}
+              ${selecciones.map(sel => `
+                <option value="${sel.id_seleccion}" ${sel.id_seleccion === seleccionSeleccionada?.id_seleccion ? 'selected' : ''}>
+                  ${sel.nombre}
+                </option>
+              `).join('')}
+            </select>
+            <div class="bandera-preview" id="preview_${consulta.id}">
+              ${seleccionSeleccionada?.bandera ? `
+                <img src="${getBanderaUrl(seleccionSeleccionada.bandera)}" alt="${seleccionSeleccionada.nombre}" style="width:24px;height:16px;object-fit:cover;border-radius:3px;" />
+                <span>${seleccionSeleccionada.nombre}</span>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      card.innerHTML = `
+        <div class="numero">CONSULTA ${consulta.id}</div>
+        <h3>${consulta.titulo}</h3>
+        <span class="badge ${consulta.badgeClass}">${consulta.badge}</span>
+        <p class="descripcion">${consulta.descripcion}</p>
+        ${selectorHTML}
+        <button class="btn-ejecutar" data-consulta="${consulta.id}" data-endpoint="${consulta.endpoint}" data-necesita="${consulta.necesitaSeleccion}">
+          <span class="spinner"></span>
+          <span class="texto-btn">▶ Ejecutar</span>
+        </button>
+      `;
+
+      grid.appendChild(card);
+
+      // Event listener para el select (si existe)
+      const select = card.querySelector(`#select_${consulta.id}`);
+      if (select) {
+        select.addEventListener('change', function() {
+          const id = parseInt(this.value);
+          const seleccion = selecciones.find(s => s.id_seleccion === id);
+          if (seleccion) {
+            seleccionSeleccionada = seleccion;
+            const preview = document.getElementById(`preview_${consulta.id}`);
+            if (preview) {
+              preview.innerHTML = `
+                <img src="${getBanderaUrl(seleccion.bandera)}" alt="${seleccion.nombre}" style="width:24px;height:16px;object-fit:cover;border-radius:3px;" />
+                <span>${seleccion.nombre}</span>
+              `;
+            }
+          }
+        });
+      }
+
+      // Event listener para el botón
+      const btn = card.querySelector('.btn-ejecutar');
+      btn.addEventListener('click', function() {
+        ejecutarConsulta(this);
+      });
+    });
+  }
+
+  // ================================================================
+  // EJECUTAR CONSULTA
+  // ================================================================
+  async function ejecutarConsulta(btn) {
+    const consultaId = parseInt(btn.dataset.consulta);
+    const endpoint = btn.dataset.endpoint;
+    const necesitaSeleccion = btn.dataset.necesita === 'true';
+    
+    const consulta = CONSULTAS.find(c => c.id === consultaId);
+    if (!consulta) return;
+
+    console.log(`🚀 Ejecutando consulta ${consultaId}: ${consulta.titulo}`);
+
+    // Deshabilitar botón y mostrar loading
+    btn.disabled = true;
+    btn.classList.add('cargando');
+
+    try {
+      let url = endpoint;
+      
+      if (necesitaSeleccion) {
+        const select = document.getElementById(`select_${consultaId}`);
+        if (select) {
+          const seleccionId = parseInt(select.value);
+          if (!seleccionId) {
+            throw new Error('Por favor selecciona una selección');
+          }
+          url = `${endpoint}/${seleccionId}`;
+          console.log(`📌 URL con selección: ${url}`);
+        } else {
+          if (!seleccionSeleccionada?.id_seleccion) {
+            throw new Error('No hay selección seleccionada');
+          }
+          url = `${endpoint}/${seleccionSeleccionada.id_seleccion}`;
+        }
+      }
+
+      console.log(`📡 Fetch: ${url}`);
+      const resp = await fetch(url);
+      console.log(`📡 Respuesta: ${resp.status} ${resp.statusText}`);
+      
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}));
+        throw new Error(errorData.error || `Error ${resp.status}: ${resp.statusText}`);
+      }
+      
+      const data = await resp.json();
+      console.log(`✅ Datos recibidos: ${data.length} registros`);
+      mostrarResultados(consulta, data);
+
+    } catch (error) {
+      console.error('❌ Error ejecutando consulta:', error);
+      mostrarError(error.message);
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('cargando');
+    }
+  }
+
+  // ================================================================
+  // MOSTRAR RESULTADOS
+  // ================================================================
+  function mostrarResultados(consulta, data) {
+    const area = document.getElementById('resultadosArea');
+    
+    if (!data || data.length === 0) {
+      area.innerHTML = `
+        <div class="no-datos">
+          <span class="icono">📭</span>
+          <p>No se encontraron datos para esta consulta</p>
+        </div>
+      `;
+      return;
+    }
+
+    const columnas = consulta.columnas;
+    
+    const titulosColumnas = {
+      'grupo': 'Grupo',
+      'seleccion': 'Selección',
+      'continente': 'Continente',
+      'ranking_fifa': 'Ranking FIFA',
+      'partidos_jugados': 'PJ',
+      'ganados': 'PG',
+      'empatados': 'PE',
+      'perdidos': 'PP',
+      'goles_favor': 'GF',
+      'goles_contra': 'GC',
+      'diferencia_goles': 'DG',
+      'puntos': 'Pts',
+      'rival': 'Rival',
+      'victorias': 'Victorias',
+      'empates': 'Empates',
+      'derrotas': 'Derrotas',
+      'goles_anotados': 'Goles Anotados',
+      'goles_recibidos': 'Goles Recibidos',
+      'ultimo_partido': 'Último Partido',
+      'promedio_goles': 'Prom. Goles',
+      'promedio_tiros': 'Prom. Tiros',
+      'posesion': 'Posesión %',
+      'estadio': 'Estadio',
+      'ciudad': 'Ciudad',
+      'partidos_programados': 'Partidos',
+      'zonas_boletos_totales': 'Zonas Boletos',
+      'partidos_jugados_lista': 'Partidos',
+      'fecha': 'Fecha',
+      'resultado': 'Resultado',
+      'titulos_mundiales': 'Títulos',
+      'experiencia_mundiales': 'Experiencia',
+      'promedio_goles_recibidos': 'Goles Recibidos',
+      'fuerza_inicial': 'Fuerza Inicial',
+      'id_partido': 'ID Partido',
+      'local': 'Local',
+      'visitante': 'Visitante',
+      'zona': 'Zona',
+      'precio_promedio': 'Precio Prom.',
+      'precio_minimo': 'Precio Mín.',
+      'precio_maximo': 'Precio Máx.',
+      'valor_plantilla': 'Valor Plantilla',
+      'edad_promedio': 'Edad Prom.',
+      'equipo_local': 'Equipo Local',
+      'equipo_visitante': 'Equipo Visitante',
+      'ranking_local': 'Ranking Local',
+      'ranking_visitante': 'Ranking Visitante',
+      'goles_promedio_local': 'Goles Local',
+      'goles_promedio_visitante': 'Goles Visitante',
+      'posesion_local': 'Posesión Local',
+      'posesion_visitante': 'Posesión Visitante',
+      'victorias_a': 'Victorias A',
+      'victorias_b': 'Victorias B',
+      'empates_historicos': 'Empates Hist.',
+      'capacidad': 'Capacidad'
+    };
+
+    const columnasConBandera = ['seleccion', 'rival', 'local', 'visitante', 'equipo_local', 'equipo_visitante'];
+
+    let html = `
+      <div class="resultado-header">
+        <h2>${consulta.titulo}</h2>
+        <div class="info">
+          <span>${data.length} registros</span>
+          ${consulta.necesitaSeleccion && seleccionSeleccionada ? `
+            <span class="seleccion-actual">
+              <img src="${getBanderaUrl(seleccionSeleccionada.bandera)}" alt="${seleccionSeleccionada.nombre}" style="width:20px;height:14px;object-fit:cover;border-radius:2px;" />
+              ${seleccionSeleccionada.nombre}
+            </span>
+          ` : ''}
+        </div>
+      </div>
+      <div class="tabla-scroll">
+        <table class="tabla-resultados">
+          <thead>
+            <tr>
+              ${columnas.map(col => `<th>${titulosColumnas[col] || col}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    data.forEach(row => {
+      html += '<tr>';
+      columnas.forEach(col => {
+        let valor = row[col];
+        
+        if (col === 'ultimo_partido' || col === 'fecha') {
+          valor = formatearFecha(valor);
+        } else if (col === 'valor_plantilla' && valor !== null && valor !== undefined) {
+          valor = `$${Number(valor).toLocaleString()}`;
+        } else if (typeof valor === 'number' && !Number.isInteger(valor)) {
+          valor = Number(valor).toFixed(2);
+        } else if (valor === null || valor === undefined) {
+          valor = '—';
+        }
+
+        if (columnasConBandera.includes(col) && row.bandera && col === 'seleccion') {
+          valor = `
+            <div class="texto-con-bandera">
+              <img src="${getBanderaUrl(row.bandera)}" alt="${row.seleccion}" class="bandera-mini" />
+              ${valor}
+            </div>
+          `;
+        } else if (col === 'rival' && row.bandera_rival) {
+          valor = `
+            <div class="texto-con-bandera">
+              <img src="${getBanderaUrl(row.bandera_rival)}" alt="${row.rival}" class="bandera-mini" />
+              ${valor}
+            </div>
+          `;
+        }
+
+        html += `<td>${valor}</td>`;
+      });
+      html += '</tr>';
+    });
+
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    area.innerHTML = html;
+  }
+
+  // ================================================================
+  // MOSTRAR ERROR
+  // ================================================================
+  function mostrarError(mensaje) {
+    const area = document.getElementById('resultadosArea');
+    area.innerHTML = `
+      <div class="no-datos" style="color: #dc3545;">
+        <span class="icono">❌</span>
+        <p style="font-weight: 600;">Error al ejecutar la consulta</p>
+        <p style="font-size: 14px; color: #666;">${mensaje}</p>
+        <p style="font-size: 13px; color: #999; margin-top: 12px;">
+          Revisa la consola del navegador (F12) para más detalles
+        </p>
+      </div>
+    `;
+  }
+
+  // ================================================================
+  // INICIALIZAR
+  // ================================================================
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 Página de simulación cargada');
+    console.log('🌐 URL base:', API_BASE);
+    cargarSelecciones();
+  });
+</script>
+
+
   </body>
 </html>
