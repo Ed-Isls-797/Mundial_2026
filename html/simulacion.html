@@ -185,12 +185,104 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
   // ================================================================
   // FUNCIONES AUXILIARES
   // ================================================================
+  // Mapeo de nombres de países a nombres de archivos de banderas
+  const MAPEO_BANDERAS = {
+    // Con acentos (como vienen de la base de datos)
+    'bélgica': 'belgica.png',
+    'canadá': 'canada.png',
+    'corea del sur': 'corea_sur.png',
+    'costa de marfil': 'costa_de_marfil.png',
+    'curaçao': 'curazao.png',
+    'curazao': 'curazao.png',
+    'españa': 'españa.png',
+    'estados unidos': 'estados_unidos.png',
+    'haití': 'haiti.png',
+    'irán': 'iran.png',
+    'japón': 'japon.png',
+    'méxico': 'mexico.png',
+    'panamá': 'panama.jpg',
+    'países bajos': 'paises_bajos.png',
+    'república checa': 'republica_checa.png',
+    'república democrática del congo': 'congo.png',
+    'sudáfrica': 'sudafrica.png',
+    'túnez': 'tunez.png',
+    'turquía': 'turquia.png',
+    'uzbekistán': 'uzbekistan.png',
+    
+    // Sin acentos (alternativas)
+    'belgica': 'belgica.png',
+    'canada': 'canada.png',
+    'corea del sur': 'corea_sur.png',
+    'costa de marfil': 'costa_de_marfil.png',
+    'curacao': 'curazao.png',
+    'espana': 'españa.png',
+    'estados unidos': 'estados_unidos.png',
+    'haiti': 'haiti.png',
+    'iran': 'iran.png',
+    'japon': 'japon.png',
+    'mexico': 'mexico.png',
+    'panama': 'panama.jpg',
+    'paises bajos': 'paises_bajos.png',
+    'republica checa': 'republica_checa.png',
+    'republica democratica del congo': 'congo.png',
+    'sudafrica': 'sudafrica.png',
+    'tunez': 'tunez.png',
+    'turquia': 'turquia.png',
+    'uzbekistan': 'uzbekistan.png',
+    
+    // Nombres completos
+    'alemania': 'alemania.png',
+    'arabia saudita': 'arabia_saudita.png',
+    'argelia': 'argelia.png',
+    'argentina': 'argentina.png',
+    'australia': 'australia.png',
+    'austria': 'austria.png',
+    'bosnia y herzegovina': 'bosnia.png',
+    'brasil': 'brasil.jpg',
+    'cabo verde': 'cabo_verde.png',
+    'colombia': 'colombia.png',
+    'croacia': 'croacia.png',
+    'ecuador': 'ecuador.png',
+    'egipto': 'egipto.png',
+    'escocia': 'escocia.jpg',
+    'francia': 'francia.jpg',
+    'ghana': 'ghana.png',
+    'inglaterra': 'inglaterra.jpg',
+    'irak': 'irak.png',
+    'jordania': 'jordania.jpg',
+    'marruecos': 'marruecos.png',
+    'noruega': 'noruega.jpg',
+    'nueva zelanda': 'nueva_zelanda.jpg',
+    'paraguay': 'paraguay.png',
+    'portugal': 'portugal.png',
+    'qatar': 'qatar.png',
+    'senegal': 'senegal.png',
+    'suecia': 'suecia.png',
+    'suiza': 'suiza.png',
+    'uruguay': 'uruguay.png'
+  };
+
   function getBanderaUrl(bandera) {
     if (!bandera) return '';
     if (bandera.startsWith('http') || bandera.startsWith('/')) {
       return bandera;
     }
-    return `${API_BASE}/uploads/${bandera}`;
+    
+    // Normalizar: convertir a minúsculas, quitar acentos y buscar en el mapeo
+    const nombreNormalizado = bandera.toLowerCase().trim();
+    
+    // Remover acentos para búsqueda fallback
+    const sinAcentos = nombreNormalizado
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+    
+    // Buscar en el mapeo: primero con acentos, luego sin acentos
+    const nombreArchivo = MAPEO_BANDERAS[nombreNormalizado] || 
+                         MAPEO_BANDERAS[sinAcentos] || 
+                         bandera;
+    
+    console.log(`🚩 getBanderaUrl: "${bandera}" -> "${nombreArchivo}"`);
+    return `../imagenes/${nombreArchivo}`;
   }
 
   function formatearFecha(fecha) {
@@ -512,20 +604,27 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
           valor = '—';
         }
 
-        if (columnasConBandera.includes(col) && row.bandera && col === 'seleccion') {
-          valor = `
-            <div class="texto-con-bandera">
-              <img src="${getBanderaUrl(row.bandera)}" alt="${row.seleccion}" class="bandera-mini" />
-              ${valor}
-            </div>
-          `;
-        } else if (col === 'rival' && row.bandera_rival) {
-          valor = `
-            <div class="texto-con-bandera">
-              <img src="${getBanderaUrl(row.bandera_rival)}" alt="${row.rival}" class="bandera-mini" />
-              ${valor}
-            </div>
-          `;
+        // Mostrar bandera para columnas de equipos/selecciones
+        if (columnasConBandera.includes(col)) {
+          if (col === 'seleccion' || col === 'local' || col === 'equipo_local') {
+            const nombrePais = row[col] || row['seleccion'] || row['local'] || row['equipo_local'];
+            const banderaUrl = getBanderaUrl(nombrePais);
+            valor = `
+              <div class="texto-con-bandera">
+                <img src="${banderaUrl}" alt="${nombrePais}" class="bandera-mini" onerror="this.style.display='none'" />
+                ${valor}
+              </div>
+            `;
+          } else if (col === 'rival' || col === 'visitante' || col === 'equipo_visitante') {
+            const nombrePais = row[col] || row['rival'] || row['visitante'] || row['equipo_visitante'];
+            const banderaUrl = getBanderaUrl(nombrePais);
+            valor = `
+              <div class="texto-con-bandera">
+                <img src="${banderaUrl}" alt="${nombrePais}" class="bandera-mini" onerror="this.style.display='none'" />
+                ${valor}
+              </div>
+            `;
+          }
         }
 
         html += `<td>${valor}</td>`;
