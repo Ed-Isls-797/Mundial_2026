@@ -339,8 +339,68 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
                          MAPEO_BANDERAS[sinAcentos] || 
                          bandera;
     
-    console.log(`🚩 getBanderaUrl: "${bandera}" -> "${nombreArchivo}"`);
     return `../imagenes/${nombreArchivo}`;
+  }
+
+  // ================================================================
+  // BANDERAS CON FALLBACK EN CASCADA (evita depender de un solo nombre
+  // de archivo exacto; si falla, prueba variantes de mayúsculas/extensión)
+  // ================================================================
+  const __banderaRegistry = {};
+  let __banderaRegistryId = 0;
+
+  function getBanderaCandidates(nombrePais) {
+    if (!nombrePais) return [];
+    const rawLower = nombrePais.toLowerCase().trim();
+    const sinAcentos = rawLower.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const candidatosSet = new Set();
+
+    // 1) Coincidencia exacta ya mapeada (con y sin acentos)
+    if (MAPEO_BANDERAS[rawLower]) candidatosSet.add(MAPEO_BANDERAS[rawLower]);
+    if (MAPEO_BANDERAS[sinAcentos]) candidatosSet.add(MAPEO_BANDERAS[sinAcentos]);
+
+    // 2) Variantes genéricas del nombre de archivo (por si el archivo real
+    //    difiere en mayúsculas, guiones o extensión)
+    [rawLower, sinAcentos].forEach(base => {
+      const conGuionBajo = base.replace(/\s+/g, '_');
+      const conGuionMedio = base.replace(/\s+/g, '-');
+      const sinEspacios = base.replace(/\s+/g, '');
+      [conGuionBajo, conGuionMedio, sinEspacios].forEach(variante => {
+        ['png', 'jpg', 'jpeg'].forEach(ext => {
+          candidatosSet.add(`${variante}.${ext}`);
+          // Variante con primera letra mayúscula (varios archivos del repo
+          // usan esta convención, ej. Austria.png, Francia.jpg)
+          const capitalizada = variante.charAt(0).toUpperCase() + variante.slice(1);
+          candidatosSet.add(`${capitalizada}.${ext}`);
+        });
+      });
+    });
+
+    return [...candidatosSet].map(archivo => `../imagenes/${archivo}`);
+  }
+
+  // Genera un <img> con fallback automático: si la primera URL falla,
+  // prueba la siguiente candidata hasta encontrar una que cargue.
+  function crearImgBandera(nombrePais, claseCss = '', estiloInline = '') {
+    const candidatos = getBanderaCandidates(nombrePais);
+    if (candidatos.length === 0) {
+      return `<span class="${claseCss}" style="${estiloInline}">🏳️</span>`;
+    }
+    const regId = __banderaRegistryId++;
+    __banderaRegistry[regId] = candidatos;
+    return `<img src="${candidatos[0]}" alt="${nombrePais || ''}" class="${claseCss}" style="${estiloInline}" data-reg="${regId}" data-idx="0" onerror="banderaSiguienteCandidato(this)" />`;
+  }
+
+  function banderaSiguienteCandidato(img) {
+    const candidatos = __banderaRegistry[img.dataset.reg];
+    if (!candidatos) { img.style.display = 'none'; return; }
+    const idx = parseInt(img.dataset.idx, 10) + 1;
+    if (idx < candidatos.length) {
+      img.dataset.idx = idx;
+      img.src = candidatos[idx];
+    } else {
+      img.style.display = 'none';
+    }
   }
 
   function formatearFecha(fecha) {
@@ -438,8 +498,8 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
               `).join('')}
             </select>
             <div class="bandera-preview" id="preview_${consulta.id}">
-              ${seleccionSeleccionada?.bandera ? `
-                <img src="${getBanderaUrl(seleccionSeleccionada.bandera)}" alt="${seleccionSeleccionada.nombre}" style="width:24px;height:16px;object-fit:cover;border-radius:3px;" />
+              ${seleccionSeleccionada?.nombre ? `
+                ${crearImgBandera(seleccionSeleccionada.nombre, '', 'width:24px;height:16px;object-fit:cover;border-radius:3px;')}
                 <span>${seleccionSeleccionada.nombre}</span>
               ` : ''}
             </div>
@@ -472,7 +532,7 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
             const preview = document.getElementById(`preview_${consulta.id}`);
             if (preview) {
               preview.innerHTML = `
-                <img src="${getBanderaUrl(seleccion.bandera)}" alt="${seleccion.nombre}" style="width:24px;height:16px;object-fit:cover;border-radius:3px;" />
+                ${crearImgBandera(seleccion.nombre, '', 'width:24px;height:16px;object-fit:cover;border-radius:3px;')}
                 <span>${seleccion.nombre}</span>
               `;
             }
@@ -631,7 +691,7 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
           <span>${data.length} registros</span>
           ${consulta.necesitaSeleccion && seleccionSeleccionada ? `
             <span class="seleccion-actual">
-              <img src="${getBanderaUrl(seleccionSeleccionada.bandera)}" alt="${seleccionSeleccionada.nombre}" style="width:20px;height:14px;object-fit:cover;border-radius:2px;" />
+              ${crearImgBandera(seleccionSeleccionada.nombre, '', 'width:20px;height:14px;object-fit:cover;border-radius:2px;')}
               ${seleccionSeleccionada.nombre}
             </span>
           ` : ''}
@@ -666,19 +726,17 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
         if (columnasConBandera.includes(col)) {
           if (col === 'seleccion' || col === 'local' || col === 'equipo_local') {
             const nombrePais = row[col] || row['seleccion'] || row['local'] || row['equipo_local'];
-            const banderaUrl = getBanderaUrl(nombrePais);
             valor = `
               <div class="texto-con-bandera">
-                <img src="${banderaUrl}" alt="${nombrePais}" class="bandera-mini" onerror="this.style.display='none'" />
+                ${crearImgBandera(nombrePais, 'bandera-mini')}
                 ${valor}
               </div>
             `;
           } else if (col === 'rival' || col === 'visitante' || col === 'equipo_visitante') {
             const nombrePais = row[col] || row['rival'] || row['visitante'] || row['equipo_visitante'];
-            const banderaUrl = getBanderaUrl(nombrePais);
             valor = `
               <div class="texto-con-bandera">
-                <img src="${banderaUrl}" alt="${nombrePais}" class="bandera-mini" onerror="this.style.display='none'" />
+                ${crearImgBandera(nombrePais, 'bandera-mini')}
                 ${valor}
               </div>
             `;
@@ -772,7 +830,7 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
             <td>${i + 1}</td>
             <td>
               <div class="texto-con-bandera">
-                <img src="${getBanderaUrl(row.bandera)}" alt="${row.nombre}" class="bandera-mini" onerror="this.style.display='none'" />
+                ${crearImgBandera(row.nombre, 'bandera-mini')}
                 ${row.nombre}
               </div>
             </td>
@@ -860,7 +918,7 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
             <td>${i + 1}</td>
             <td>
               <div class="texto-con-bandera">
-                <img src="${getBanderaUrl(row.bandera)}" alt="${row.nombre}" class="bandera-mini" onerror="this.style.display='none'" />
+                ${crearImgBandera(row.nombre, 'bandera-mini')}
                 ${row.nombre}
               </div>
             </td>
@@ -939,14 +997,14 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
       let html = `
         <div class="escenario-resumen">
           <div class="escenario-equipo">
-            <img src="${getBanderaUrl(local?.bandera)}" alt="${local?.nombre}" onerror="this.style.display='none'" />
+            ${crearImgBandera(local?.nombre)}
             <span>${local?.nombre || 'Local'}</span>
             <strong>${data.rating_local_actual.toFixed(0)} ELO</strong>
             <span class="prob-esperada">${(data.probabilidad_esperada_local * 100).toFixed(1)}% prob.</span>
           </div>
           <div class="escenario-vs">VS</div>
           <div class="escenario-equipo">
-            <img src="${getBanderaUrl(visitante?.bandera)}" alt="${visitante?.nombre}" onerror="this.style.display='none'" />
+            ${crearImgBandera(visitante?.nombre)}
             <span>${visitante?.nombre || 'Visitante'}</span>
             <strong>${data.rating_visitante_actual.toFixed(0)} ELO</strong>
             <span class="prob-esperada">${(data.probabilidad_esperada_visitante * 100).toFixed(1)}% prob.</span>
