@@ -43,6 +43,64 @@
             <p>10 consultas para el simulador de partidos (Monte Carlo, Poisson, Elo, ML)</p>
           </div>
 
+          <!-- ================================================================
+               MOTOR INTELIGENTE DE SIMULACIÓN — Entrega 1
+               Rating ELO + Índice de Fuerza + Simulador de Enfrentamientos
+               ================================================================ -->
+          <section class="motor-section">
+            <div class="motor-header">
+              <h2>🧠 Motor Inteligente de Simulación</h2>
+              <p>Rating ELO dinámico, Índice de Fuerza ponderado y simulador de enfrentamientos entre selecciones</p>
+            </div>
+
+            <div class="motor-tabs">
+              <button class="motor-tab active" data-tab="elo">📈 Rating ELO</button>
+              <button class="motor-tab" data-tab="indice">⚖️ Índice de Fuerza</button>
+              <button class="motor-tab" data-tab="simulador">🆚 Simulador de Partido</button>
+            </div>
+
+            <!-- ---------- TAB: RATING ELO ---------- -->
+            <div class="motor-panel active" id="panel-elo">
+              <div class="panel-toolbar">
+                <p class="panel-desc">Ranking dinámico calculado con el sistema ELO clásico (K=30), actualizado tras cada partido jugado.</p>
+                <button class="btn-motor" id="btnCargarElo">🔄 Cargar tabla ELO</button>
+              </div>
+              <div class="tabla-scroll" id="contenedorElo">
+                <div class="placeholder-mini">Haz clic en "Cargar tabla ELO" para ver el ranking</div>
+              </div>
+            </div>
+
+            <!-- ---------- TAB: ÍNDICE DE FUERZA ---------- -->
+            <div class="motor-panel" id="panel-indice">
+              <div class="panel-toolbar">
+                <p class="panel-desc">Índice compuesto (0–100) que pondera Rating ELO, Ranking FIFA, Forma reciente, Valor de plantilla y Experiencia mundialista.</p>
+                <button class="btn-motor" id="btnCargarIndice">🔄 Cargar Índice de Fuerza</button>
+              </div>
+              <div class="ponderaciones-box" id="ponderacionesBox"></div>
+              <div class="tabla-scroll" id="contenedorIndice">
+                <div class="placeholder-mini">Haz clic en "Cargar Índice de Fuerza" para ver la tabla</div>
+              </div>
+            </div>
+
+            <!-- ---------- TAB: SIMULADOR ---------- -->
+            <div class="motor-panel" id="panel-simulador">
+              <p class="panel-desc">Elige dos selecciones y calcula la probabilidad esperada de resultado según su Rating ELO actual, junto con los 3 escenarios posibles (victoria local, empate, victoria visitante).</p>
+              <div class="simulador-selectores">
+                <div class="simulador-equipo">
+                  <label for="selectLocal">🏠 Local</label>
+                  <select id="selectLocal"></select>
+                </div>
+                <div class="simulador-vs">VS</div>
+                <div class="simulador-equipo">
+                  <label for="selectVisitante">✈️ Visitante</label>
+                  <select id="selectVisitante"></select>
+                </div>
+              </div>
+              <button class="btn-motor btn-motor-full" id="btnSimular">⚡ Calcular escenarios</button>
+              <div id="contenedorEscenarios"></div>
+            </div>
+          </section>
+
           <!-- Grid de tarjetas de consultas -->
           <div class="consulta-grid" id="consultaGrid">
             <!-- Las tarjetas se generan con JavaScript -->
@@ -192,17 +250,17 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
     'canadá': 'canada.png',
     'corea del sur': 'corea_sur.png',
     'costa de marfil': 'costa_de_marfil.png',
-    'curaçao': 'curazao.png',
-    'curazao': 'curazao.png',
+    'curaçao': 'Curazao.png',
+    'curazao': 'Curazao.png',
     'españa': 'españa.png',
-    'estados unidos': 'estados_unidos.png',
+    'estados unidos': 'Estados_Unidos.png',
     'haití': 'haiti.png',
     'irán': 'iran.png',
     'japón': 'japon.png',
     'méxico': 'mexico.png',
     'panamá': 'panama.jpg',
-    'países bajos': 'paises_bajos.png',
-    'república checa': 'republica_checa.png',
+    'países bajos': 'Paises_bajos.png',
+    'república checa': 'Republica_Checa.png',
     'república democrática del congo': 'congo.png',
     'sudáfrica': 'sudafrica.png',
     'túnez': 'tunez.png',
@@ -214,16 +272,16 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
     'canada': 'canada.png',
     'corea del sur': 'corea_sur.png',
     'costa de marfil': 'costa_de_marfil.png',
-    'curacao': 'curazao.png',
+    'curacao': 'Curazao.png',
     'espana': 'españa.png',
-    'estados unidos': 'estados_unidos.png',
+    'estados unidos': 'Estados_Unidos.png',
     'haiti': 'haiti.png',
     'iran': 'iran.png',
     'japon': 'japon.png',
     'mexico': 'mexico.png',
     'panama': 'panama.jpg',
-    'paises bajos': 'paises_bajos.png',
-    'republica checa': 'republica_checa.png',
+    'paises bajos': 'Paises_bajos.png',
+    'republica checa': 'Republica_Checa.png',
     'republica democratica del congo': 'congo.png',
     'sudafrica': 'sudafrica.png',
     'tunez': 'tunez.png',
@@ -236,7 +294,7 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
     'argelia': 'argelia.png',
     'argentina': 'argentina.png',
     'australia': 'australia.png',
-    'austria': 'austria.png',
+    'austria': 'Austria.png',
     'bosnia y herzegovina': 'bosnia.png',
     'brasil': 'brasil.jpg',
     'cabo verde': 'cabo_verde.png',
@@ -244,17 +302,17 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
     'croacia': 'croacia.png',
     'ecuador': 'ecuador.png',
     'egipto': 'egipto.png',
-    'escocia': 'escocia.jpg',
-    'francia': 'francia.jpg',
+    'escocia': 'Escocia.jpg',
+    'francia': 'Francia.jpg',
     'ghana': 'ghana.png',
-    'inglaterra': 'inglaterra.jpg',
+    'inglaterra': 'Inglaterra.jpg',
     'irak': 'irak.png',
     'jordania': 'jordania.jpg',
     'marruecos': 'marruecos.png',
-    'noruega': 'noruega.jpg',
+    'noruega': 'Noruega.jpg',
     'nueva zelanda': 'nueva_zelanda.jpg',
     'paraguay': 'paraguay.png',
-    'portugal': 'portugal.png',
+    'portugal': 'Portugal.png',
     'qatar': 'qatar.png',
     'senegal': 'senegal.png',
     'suecia': 'suecia.png',
@@ -281,8 +339,68 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
                          MAPEO_BANDERAS[sinAcentos] || 
                          bandera;
     
-    console.log(`🚩 getBanderaUrl: "${bandera}" -> "${nombreArchivo}"`);
     return `../imagenes/${nombreArchivo}`;
+  }
+
+  // ================================================================
+  // BANDERAS CON FALLBACK EN CASCADA (evita depender de un solo nombre
+  // de archivo exacto; si falla, prueba variantes de mayúsculas/extensión)
+  // ================================================================
+  const __banderaRegistry = {};
+  let __banderaRegistryId = 0;
+
+  function getBanderaCandidates(nombrePais) {
+    if (!nombrePais) return [];
+    const rawLower = nombrePais.toLowerCase().trim();
+    const sinAcentos = rawLower.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const candidatosSet = new Set();
+
+    // 1) Coincidencia exacta ya mapeada (con y sin acentos)
+    if (MAPEO_BANDERAS[rawLower]) candidatosSet.add(MAPEO_BANDERAS[rawLower]);
+    if (MAPEO_BANDERAS[sinAcentos]) candidatosSet.add(MAPEO_BANDERAS[sinAcentos]);
+
+    // 2) Variantes genéricas del nombre de archivo (por si el archivo real
+    //    difiere en mayúsculas, guiones o extensión)
+    [rawLower, sinAcentos].forEach(base => {
+      const conGuionBajo = base.replace(/\s+/g, '_');
+      const conGuionMedio = base.replace(/\s+/g, '-');
+      const sinEspacios = base.replace(/\s+/g, '');
+      [conGuionBajo, conGuionMedio, sinEspacios].forEach(variante => {
+        ['png', 'jpg', 'jpeg'].forEach(ext => {
+          candidatosSet.add(`${variante}.${ext}`);
+          // Variante con primera letra mayúscula (varios archivos del repo
+          // usan esta convención, ej. Austria.png, Francia.jpg)
+          const capitalizada = variante.charAt(0).toUpperCase() + variante.slice(1);
+          candidatosSet.add(`${capitalizada}.${ext}`);
+        });
+      });
+    });
+
+    return [...candidatosSet].map(archivo => `../imagenes/${archivo}`);
+  }
+
+  // Genera un <img> con fallback automático: si la primera URL falla,
+  // prueba la siguiente candidata hasta encontrar una que cargue.
+  function crearImgBandera(nombrePais, claseCss = '', estiloInline = '') {
+    const candidatos = getBanderaCandidates(nombrePais);
+    if (candidatos.length === 0) {
+      return `<span class="${claseCss}" style="${estiloInline}">🏳️</span>`;
+    }
+    const regId = __banderaRegistryId++;
+    __banderaRegistry[regId] = candidatos;
+    return `<img src="${candidatos[0]}" alt="${nombrePais || ''}" class="${claseCss}" style="${estiloInline}" data-reg="${regId}" data-idx="0" onerror="banderaSiguienteCandidato(this)" />`;
+  }
+
+  function banderaSiguienteCandidato(img) {
+    const candidatos = __banderaRegistry[img.dataset.reg];
+    if (!candidatos) { img.style.display = 'none'; return; }
+    const idx = parseInt(img.dataset.idx, 10) + 1;
+    if (idx < candidatos.length) {
+      img.dataset.idx = idx;
+      img.src = candidatos[idx];
+    } else {
+      img.style.display = 'none';
+    }
   }
 
   function formatearFecha(fecha) {
@@ -380,8 +498,8 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
               `).join('')}
             </select>
             <div class="bandera-preview" id="preview_${consulta.id}">
-              ${seleccionSeleccionada?.bandera ? `
-                <img src="${getBanderaUrl(seleccionSeleccionada.bandera)}" alt="${seleccionSeleccionada.nombre}" style="width:24px;height:16px;object-fit:cover;border-radius:3px;" />
+              ${seleccionSeleccionada?.nombre ? `
+                ${crearImgBandera(seleccionSeleccionada.nombre, '', 'width:24px;height:16px;object-fit:cover;border-radius:3px;')}
                 <span>${seleccionSeleccionada.nombre}</span>
               ` : ''}
             </div>
@@ -414,7 +532,7 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
             const preview = document.getElementById(`preview_${consulta.id}`);
             if (preview) {
               preview.innerHTML = `
-                <img src="${getBanderaUrl(seleccion.bandera)}" alt="${seleccion.nombre}" style="width:24px;height:16px;object-fit:cover;border-radius:3px;" />
+                ${crearImgBandera(seleccion.nombre, '', 'width:24px;height:16px;object-fit:cover;border-radius:3px;')}
                 <span>${seleccion.nombre}</span>
               `;
             }
@@ -573,7 +691,7 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
           <span>${data.length} registros</span>
           ${consulta.necesitaSeleccion && seleccionSeleccionada ? `
             <span class="seleccion-actual">
-              <img src="${getBanderaUrl(seleccionSeleccionada.bandera)}" alt="${seleccionSeleccionada.nombre}" style="width:20px;height:14px;object-fit:cover;border-radius:2px;" />
+              ${crearImgBandera(seleccionSeleccionada.nombre, '', 'width:20px;height:14px;object-fit:cover;border-radius:2px;')}
               ${seleccionSeleccionada.nombre}
             </span>
           ` : ''}
@@ -608,19 +726,17 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
         if (columnasConBandera.includes(col)) {
           if (col === 'seleccion' || col === 'local' || col === 'equipo_local') {
             const nombrePais = row[col] || row['seleccion'] || row['local'] || row['equipo_local'];
-            const banderaUrl = getBanderaUrl(nombrePais);
             valor = `
               <div class="texto-con-bandera">
-                <img src="${banderaUrl}" alt="${nombrePais}" class="bandera-mini" onerror="this.style.display='none'" />
+                ${crearImgBandera(nombrePais, 'bandera-mini')}
                 ${valor}
               </div>
             `;
           } else if (col === 'rival' || col === 'visitante' || col === 'equipo_visitante') {
             const nombrePais = row[col] || row['rival'] || row['visitante'] || row['equipo_visitante'];
-            const banderaUrl = getBanderaUrl(nombrePais);
             valor = `
               <div class="texto-con-bandera">
-                <img src="${banderaUrl}" alt="${nombrePais}" class="bandera-mini" onerror="this.style.display='none'" />
+                ${crearImgBandera(nombrePais, 'bandera-mini')}
                 ${valor}
               </div>
             `;
@@ -659,12 +775,283 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
   }
 
   // ================================================================
+  // MOTOR INTELIGENTE DE SIMULACIÓN — Tabs
+  // ================================================================
+  function inicializarTabsMotor() {
+    const tabs = document.querySelectorAll('.motor-tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        const destino = this.dataset.tab;
+
+        document.querySelectorAll('.motor-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.motor-panel').forEach(p => p.classList.remove('active'));
+
+        this.classList.add('active');
+        document.getElementById(`panel-${destino}`).classList.add('active');
+      });
+    });
+  }
+
+  // ---------------- Rating ELO ----------------
+  async function cargarTablaElo() {
+    const btn = document.getElementById('btnCargarElo');
+    const contenedor = document.getElementById('contenedorElo');
+
+    btn.disabled = true;
+    btn.classList.add('cargando');
+
+    try {
+      const resp = await fetch(`${API_BASE}/api/elo/tabla`);
+      if (!resp.ok) throw new Error(`Error ${resp.status}: ${resp.statusText}`);
+      const data = await resp.json();
+
+      if (!data || data.length === 0) {
+        contenedor.innerHTML = `<div class="placeholder-mini">No hay datos de Rating ELO disponibles</div>`;
+        return;
+      }
+
+      let html = `
+        <table class="tabla-resultados">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Selección</th>
+              <th>Rating Actual</th>
+              <th>Rating Inicial</th>
+              <th>Última Actualización</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      data.forEach((row, i) => {
+        html += `
+          <tr>
+            <td>${i + 1}</td>
+            <td>
+              <div class="texto-con-bandera">
+                ${crearImgBandera(row.nombre, 'bandera-mini')}
+                ${row.nombre}
+              </div>
+            </td>
+            <td><strong>${Number(row.rating_actual).toFixed(2)}</strong></td>
+            <td>${Number(row.rating_inicial).toFixed(2)}</td>
+            <td>${formatearFecha(row.fecha_actualizacion)}</td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      contenedor.innerHTML = html;
+
+    } catch (error) {
+      console.error('❌ Error cargando tabla ELO:', error);
+      contenedor.innerHTML = `<div class="placeholder-mini error-mini">❌ ${error.message}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('cargando');
+    }
+  }
+
+  // ---------------- Índice de Fuerza ----------------
+  async function cargarIndiceFuerza() {
+    const btn = document.getElementById('btnCargarIndice');
+    const contenedor = document.getElementById('contenedorIndice');
+    const ponderacionesBox = document.getElementById('ponderacionesBox');
+
+    btn.disabled = true;
+    btn.classList.add('cargando');
+
+    try {
+      const [respTabla, respPesos] = await Promise.all([
+        fetch(`${API_BASE}/api/indice-fuerza/tabla`),
+        fetch(`${API_BASE}/api/indice-fuerza/ponderaciones`)
+      ]);
+
+      if (!respTabla.ok) throw new Error(`Error ${respTabla.status}: ${respTabla.statusText}`);
+      const data = await respTabla.json();
+
+      if (respPesos.ok) {
+        const pesos = await respPesos.json();
+        const etiquetas = {
+          rating_elo: 'Rating ELO',
+          ranking_fifa: 'Ranking FIFA',
+          forma_reciente: 'Forma Reciente',
+          plantilla: 'Valor Plantilla',
+          experiencia: 'Experiencia Mundialista'
+        };
+        ponderacionesBox.innerHTML = `
+          <div class="ponderaciones-titulo">⚖️ Ponderaciones aplicadas:</div>
+          <div class="ponderaciones-lista">
+            ${Object.entries(pesos).map(([k, v]) => `
+              <span class="ponderacion-chip">${etiquetas[k] || k}: <strong>${(v * 100).toFixed(0)}%</strong></span>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      if (!data || data.length === 0) {
+        contenedor.innerHTML = `<div class="placeholder-mini">No hay datos de Índice de Fuerza disponibles</div>`;
+        return;
+      }
+
+      let html = `
+        <table class="tabla-resultados">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Selección</th>
+              <th>Índice de Fuerza</th>
+              <th>Score ELO</th>
+              <th>Score Ranking</th>
+              <th>Score Forma</th>
+              <th>Score Plantilla</th>
+              <th>Score Experiencia</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      data.forEach((row, i) => {
+        html += `
+          <tr>
+            <td>${i + 1}</td>
+            <td>
+              <div class="texto-con-bandera">
+                ${crearImgBandera(row.nombre, 'bandera-mini')}
+                ${row.nombre}
+              </div>
+            </td>
+            <td><strong class="indice-fuerza-valor">${row.indice_fuerza.toFixed(2)}</strong></td>
+            <td>${row.score_elo.toFixed(2)}</td>
+            <td>${row.score_ranking.toFixed(2)}</td>
+            <td>${row.score_forma.toFixed(2)}</td>
+            <td>${row.score_plantilla.toFixed(2)}</td>
+            <td>${row.score_experiencia.toFixed(2)}</td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      contenedor.innerHTML = html;
+
+    } catch (error) {
+      console.error('❌ Error cargando índice de fuerza:', error);
+      contenedor.innerHTML = `<div class="placeholder-mini error-mini">❌ ${error.message}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('cargando');
+    }
+  }
+
+  // ---------------- Simulador de Partido ----------------
+  function poblarSelectsSimulador() {
+    const selectLocal = document.getElementById('selectLocal');
+    const selectVisitante = document.getElementById('selectVisitante');
+    if (!selectLocal || !selectVisitante || !selecciones.length) return;
+
+    const opciones = selecciones.map(s => `<option value="${s.id_seleccion}">${s.nombre}</option>`).join('');
+    selectLocal.innerHTML = opciones;
+    selectVisitante.innerHTML = opciones;
+
+    // Por defecto, elegir dos selecciones distintas
+    selectLocal.value = selecciones[0]?.id_seleccion || '';
+    selectVisitante.value = selecciones[1]?.id_seleccion || selecciones[0]?.id_seleccion || '';
+  }
+
+  async function calcularEscenarios() {
+    const btn = document.getElementById('btnSimular');
+    const contenedor = document.getElementById('contenedorEscenarios');
+    const idLocal = document.getElementById('selectLocal').value;
+    const idVisitante = document.getElementById('selectVisitante').value;
+
+    if (!idLocal || !idVisitante) {
+      contenedor.innerHTML = `<div class="placeholder-mini error-mini">Selecciona ambos equipos</div>`;
+      return;
+    }
+    if (idLocal === idVisitante) {
+      contenedor.innerHTML = `<div class="placeholder-mini error-mini">El local y el visitante no pueden ser el mismo equipo</div>`;
+      return;
+    }
+
+    btn.disabled = true;
+    btn.classList.add('cargando');
+
+    try {
+      const resp = await fetch(`${API_BASE}/api/elo/escenarios?id_local=${idLocal}&id_visitante=${idVisitante}`);
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.error || `Error ${resp.status}: ${resp.statusText}`);
+      }
+      const data = await resp.json();
+
+      const local = selecciones.find(s => String(s.id_seleccion) === String(idLocal));
+      const visitante = selecciones.find(s => String(s.id_seleccion) === String(idVisitante));
+
+      const iconoEscenario = {
+        'Gana local': '🏆',
+        'Empate': '🤝',
+        'Gana visitante': '✈️'
+      };
+
+      let html = `
+        <div class="escenario-resumen">
+          <div class="escenario-equipo">
+            ${crearImgBandera(local?.nombre)}
+            <span>${local?.nombre || 'Local'}</span>
+            <strong>${data.rating_local_actual.toFixed(0)} ELO</strong>
+            <span class="prob-esperada">${(data.probabilidad_esperada_local * 100).toFixed(1)}% prob.</span>
+          </div>
+          <div class="escenario-vs">VS</div>
+          <div class="escenario-equipo">
+            ${crearImgBandera(visitante?.nombre)}
+            <span>${visitante?.nombre || 'Visitante'}</span>
+            <strong>${data.rating_visitante_actual.toFixed(0)} ELO</strong>
+            <span class="prob-esperada">${(data.probabilidad_esperada_visitante * 100).toFixed(1)}% prob.</span>
+          </div>
+        </div>
+
+        <div class="escenarios-grid">
+          ${data.escenarios.map(e => `
+            <div class="escenario-card">
+              <div class="escenario-icono">${iconoEscenario[e.escenario] || '⚽'}</div>
+              <div class="escenario-titulo">${e.escenario}</div>
+              <div class="escenario-ratings">
+                <div><span>${local?.nombre || 'Local'}</span><strong>${e.rating_local_resultante.toFixed(1)}</strong></div>
+                <div><span>${visitante?.nombre || 'Visitante'}</span><strong>${e.rating_visitante_resultante.toFixed(1)}</strong></div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      contenedor.innerHTML = html;
+
+    } catch (error) {
+      console.error('❌ Error calculando escenarios:', error);
+      contenedor.innerHTML = `<div class="placeholder-mini error-mini">❌ ${error.message}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('cargando');
+    }
+  }
+
+  // ================================================================
   // INICIALIZAR
   // ================================================================
   document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 Página de simulación cargada');
     console.log('🌐 URL base:', API_BASE);
-    cargarSelecciones();
+
+    inicializarTabsMotor();
+
+    document.getElementById('btnCargarElo')?.addEventListener('click', cargarTablaElo);
+    document.getElementById('btnCargarIndice')?.addEventListener('click', cargarIndiceFuerza);
+    document.getElementById('btnSimular')?.addEventListener('click', calcularEscenarios);
+
+    cargarSelecciones().then(() => {
+      poblarSelectsSimulador();
+    });
   });
 </script>
 
