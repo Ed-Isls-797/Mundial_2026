@@ -1,0 +1,26 @@
+{
+  "name": "mundial_2026",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.1.2"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ed-Isls-797/Mundial_2026.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Ed-Isls-797/Mundial_2026/issues"
+  },
+  "homepage": "https://github.com/Ed-Isls-797/Mundial_2026#readme"
+}
