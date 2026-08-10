@@ -43,6 +43,64 @@
             <p>10 consultas para el simulador de partidos (Monte Carlo, Poisson, Elo, ML)</p>
           </div>
 
+          <!-- ================================================================
+               MOTOR INTELIGENTE DE SIMULACIÓN — Entrega 1
+               Rating ELO + Índice de Fuerza + Simulador de Enfrentamientos
+               ================================================================ -->
+          <section class="motor-section">
+            <div class="motor-header">
+              <h2>🧠 Motor Inteligente de Simulación</h2>
+              <p>Rating ELO dinámico, Índice de Fuerza ponderado y simulador de enfrentamientos entre selecciones</p>
+            </div>
+
+            <div class="motor-tabs">
+              <button class="motor-tab active" data-tab="elo">📈 Rating ELO</button>
+              <button class="motor-tab" data-tab="indice">⚖️ Índice de Fuerza</button>
+              <button class="motor-tab" data-tab="simulador">🆚 Simulador de Partido</button>
+            </div>
+
+            <!-- ---------- TAB: RATING ELO ---------- -->
+            <div class="motor-panel active" id="panel-elo">
+              <div class="panel-toolbar">
+                <p class="panel-desc">Ranking dinámico calculado con el sistema ELO clásico (K=30), actualizado tras cada partido jugado.</p>
+                <button class="btn-motor" id="btnCargarElo">🔄 Cargar tabla ELO</button>
+              </div>
+              <div class="tabla-scroll" id="contenedorElo">
+                <div class="placeholder-mini">Haz clic en "Cargar tabla ELO" para ver el ranking</div>
+              </div>
+            </div>
+
+            <!-- ---------- TAB: ÍNDICE DE FUERZA ---------- -->
+            <div class="motor-panel" id="panel-indice">
+              <div class="panel-toolbar">
+                <p class="panel-desc">Índice compuesto (0–100) que pondera Rating ELO, Ranking FIFA, Forma reciente, Valor de plantilla y Experiencia mundialista.</p>
+                <button class="btn-motor" id="btnCargarIndice">🔄 Cargar Índice de Fuerza</button>
+              </div>
+              <div class="ponderaciones-box" id="ponderacionesBox"></div>
+              <div class="tabla-scroll" id="contenedorIndice">
+                <div class="placeholder-mini">Haz clic en "Cargar Índice de Fuerza" para ver la tabla</div>
+              </div>
+            </div>
+
+            <!-- ---------- TAB: SIMULADOR ---------- -->
+            <div class="motor-panel" id="panel-simulador">
+              <p class="panel-desc">Elige dos selecciones y calcula la probabilidad esperada de resultado según su Rating ELO actual, junto con los 3 escenarios posibles (victoria local, empate, victoria visitante).</p>
+              <div class="simulador-selectores">
+                <div class="simulador-equipo">
+                  <label for="selectLocal">🏠 Local</label>
+                  <select id="selectLocal"></select>
+                </div>
+                <div class="simulador-vs">VS</div>
+                <div class="simulador-equipo">
+                  <label for="selectVisitante">✈️ Visitante</label>
+                  <select id="selectVisitante"></select>
+                </div>
+              </div>
+              <button class="btn-motor btn-motor-full" id="btnSimular">⚡ Calcular escenarios</button>
+              <div id="contenedorEscenarios"></div>
+            </div>
+          </section>
+
           <!-- Grid de tarjetas de consultas -->
           <div class="consulta-grid" id="consultaGrid">
             <!-- Las tarjetas se generan con JavaScript -->
@@ -659,12 +717,283 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
   }
 
   // ================================================================
+  // MOTOR INTELIGENTE DE SIMULACIÓN — Tabs
+  // ================================================================
+  function inicializarTabsMotor() {
+    const tabs = document.querySelectorAll('.motor-tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        const destino = this.dataset.tab;
+
+        document.querySelectorAll('.motor-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.motor-panel').forEach(p => p.classList.remove('active'));
+
+        this.classList.add('active');
+        document.getElementById(`panel-${destino}`).classList.add('active');
+      });
+    });
+  }
+
+  // ---------------- Rating ELO ----------------
+  async function cargarTablaElo() {
+    const btn = document.getElementById('btnCargarElo');
+    const contenedor = document.getElementById('contenedorElo');
+
+    btn.disabled = true;
+    btn.classList.add('cargando');
+
+    try {
+      const resp = await fetch(`${API_BASE}/api/elo/tabla`);
+      if (!resp.ok) throw new Error(`Error ${resp.status}: ${resp.statusText}`);
+      const data = await resp.json();
+
+      if (!data || data.length === 0) {
+        contenedor.innerHTML = `<div class="placeholder-mini">No hay datos de Rating ELO disponibles</div>`;
+        return;
+      }
+
+      let html = `
+        <table class="tabla-resultados">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Selección</th>
+              <th>Rating Actual</th>
+              <th>Rating Inicial</th>
+              <th>Última Actualización</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      data.forEach((row, i) => {
+        html += `
+          <tr>
+            <td>${i + 1}</td>
+            <td>
+              <div class="texto-con-bandera">
+                <img src="${getBanderaUrl(row.bandera)}" alt="${row.nombre}" class="bandera-mini" onerror="this.style.display='none'" />
+                ${row.nombre}
+              </div>
+            </td>
+            <td><strong>${Number(row.rating_actual).toFixed(2)}</strong></td>
+            <td>${Number(row.rating_inicial).toFixed(2)}</td>
+            <td>${formatearFecha(row.fecha_actualizacion)}</td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      contenedor.innerHTML = html;
+
+    } catch (error) {
+      console.error('❌ Error cargando tabla ELO:', error);
+      contenedor.innerHTML = `<div class="placeholder-mini error-mini">❌ ${error.message}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('cargando');
+    }
+  }
+
+  // ---------------- Índice de Fuerza ----------------
+  async function cargarIndiceFuerza() {
+    const btn = document.getElementById('btnCargarIndice');
+    const contenedor = document.getElementById('contenedorIndice');
+    const ponderacionesBox = document.getElementById('ponderacionesBox');
+
+    btn.disabled = true;
+    btn.classList.add('cargando');
+
+    try {
+      const [respTabla, respPesos] = await Promise.all([
+        fetch(`${API_BASE}/api/indice-fuerza/tabla`),
+        fetch(`${API_BASE}/api/indice-fuerza/ponderaciones`)
+      ]);
+
+      if (!respTabla.ok) throw new Error(`Error ${respTabla.status}: ${respTabla.statusText}`);
+      const data = await respTabla.json();
+
+      if (respPesos.ok) {
+        const pesos = await respPesos.json();
+        const etiquetas = {
+          rating_elo: 'Rating ELO',
+          ranking_fifa: 'Ranking FIFA',
+          forma_reciente: 'Forma Reciente',
+          plantilla: 'Valor Plantilla',
+          experiencia: 'Experiencia Mundialista'
+        };
+        ponderacionesBox.innerHTML = `
+          <div class="ponderaciones-titulo">⚖️ Ponderaciones aplicadas:</div>
+          <div class="ponderaciones-lista">
+            ${Object.entries(pesos).map(([k, v]) => `
+              <span class="ponderacion-chip">${etiquetas[k] || k}: <strong>${(v * 100).toFixed(0)}%</strong></span>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      if (!data || data.length === 0) {
+        contenedor.innerHTML = `<div class="placeholder-mini">No hay datos de Índice de Fuerza disponibles</div>`;
+        return;
+      }
+
+      let html = `
+        <table class="tabla-resultados">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Selección</th>
+              <th>Índice de Fuerza</th>
+              <th>Score ELO</th>
+              <th>Score Ranking</th>
+              <th>Score Forma</th>
+              <th>Score Plantilla</th>
+              <th>Score Experiencia</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      data.forEach((row, i) => {
+        html += `
+          <tr>
+            <td>${i + 1}</td>
+            <td>
+              <div class="texto-con-bandera">
+                <img src="${getBanderaUrl(row.bandera)}" alt="${row.nombre}" class="bandera-mini" onerror="this.style.display='none'" />
+                ${row.nombre}
+              </div>
+            </td>
+            <td><strong class="indice-fuerza-valor">${row.indice_fuerza.toFixed(2)}</strong></td>
+            <td>${row.score_elo.toFixed(2)}</td>
+            <td>${row.score_ranking.toFixed(2)}</td>
+            <td>${row.score_forma.toFixed(2)}</td>
+            <td>${row.score_plantilla.toFixed(2)}</td>
+            <td>${row.score_experiencia.toFixed(2)}</td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      contenedor.innerHTML = html;
+
+    } catch (error) {
+      console.error('❌ Error cargando índice de fuerza:', error);
+      contenedor.innerHTML = `<div class="placeholder-mini error-mini">❌ ${error.message}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('cargando');
+    }
+  }
+
+  // ---------------- Simulador de Partido ----------------
+  function poblarSelectsSimulador() {
+    const selectLocal = document.getElementById('selectLocal');
+    const selectVisitante = document.getElementById('selectVisitante');
+    if (!selectLocal || !selectVisitante || !selecciones.length) return;
+
+    const opciones = selecciones.map(s => `<option value="${s.id_seleccion}">${s.nombre}</option>`).join('');
+    selectLocal.innerHTML = opciones;
+    selectVisitante.innerHTML = opciones;
+
+    // Por defecto, elegir dos selecciones distintas
+    selectLocal.value = selecciones[0]?.id_seleccion || '';
+    selectVisitante.value = selecciones[1]?.id_seleccion || selecciones[0]?.id_seleccion || '';
+  }
+
+  async function calcularEscenarios() {
+    const btn = document.getElementById('btnSimular');
+    const contenedor = document.getElementById('contenedorEscenarios');
+    const idLocal = document.getElementById('selectLocal').value;
+    const idVisitante = document.getElementById('selectVisitante').value;
+
+    if (!idLocal || !idVisitante) {
+      contenedor.innerHTML = `<div class="placeholder-mini error-mini">Selecciona ambos equipos</div>`;
+      return;
+    }
+    if (idLocal === idVisitante) {
+      contenedor.innerHTML = `<div class="placeholder-mini error-mini">El local y el visitante no pueden ser el mismo equipo</div>`;
+      return;
+    }
+
+    btn.disabled = true;
+    btn.classList.add('cargando');
+
+    try {
+      const resp = await fetch(`${API_BASE}/api/elo/escenarios?id_local=${idLocal}&id_visitante=${idVisitante}`);
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.error || `Error ${resp.status}: ${resp.statusText}`);
+      }
+      const data = await resp.json();
+
+      const local = selecciones.find(s => String(s.id_seleccion) === String(idLocal));
+      const visitante = selecciones.find(s => String(s.id_seleccion) === String(idVisitante));
+
+      const iconoEscenario = {
+        'Gana local': '🏆',
+        'Empate': '🤝',
+        'Gana visitante': '✈️'
+      };
+
+      let html = `
+        <div class="escenario-resumen">
+          <div class="escenario-equipo">
+            <img src="${getBanderaUrl(local?.bandera)}" alt="${local?.nombre}" onerror="this.style.display='none'" />
+            <span>${local?.nombre || 'Local'}</span>
+            <strong>${data.rating_local_actual.toFixed(0)} ELO</strong>
+            <span class="prob-esperada">${(data.probabilidad_esperada_local * 100).toFixed(1)}% prob.</span>
+          </div>
+          <div class="escenario-vs">VS</div>
+          <div class="escenario-equipo">
+            <img src="${getBanderaUrl(visitante?.bandera)}" alt="${visitante?.nombre}" onerror="this.style.display='none'" />
+            <span>${visitante?.nombre || 'Visitante'}</span>
+            <strong>${data.rating_visitante_actual.toFixed(0)} ELO</strong>
+            <span class="prob-esperada">${(data.probabilidad_esperada_visitante * 100).toFixed(1)}% prob.</span>
+          </div>
+        </div>
+
+        <div class="escenarios-grid">
+          ${data.escenarios.map(e => `
+            <div class="escenario-card">
+              <div class="escenario-icono">${iconoEscenario[e.escenario] || '⚽'}</div>
+              <div class="escenario-titulo">${e.escenario}</div>
+              <div class="escenario-ratings">
+                <div><span>${local?.nombre || 'Local'}</span><strong>${e.rating_local_resultante.toFixed(1)}</strong></div>
+                <div><span>${visitante?.nombre || 'Visitante'}</span><strong>${e.rating_visitante_resultante.toFixed(1)}</strong></div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      contenedor.innerHTML = html;
+
+    } catch (error) {
+      console.error('❌ Error calculando escenarios:', error);
+      contenedor.innerHTML = `<div class="placeholder-mini error-mini">❌ ${error.message}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('cargando');
+    }
+  }
+
+  // ================================================================
   // INICIALIZAR
   // ================================================================
   document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 Página de simulación cargada');
     console.log('🌐 URL base:', API_BASE);
-    cargarSelecciones();
+
+    inicializarTabsMotor();
+
+    document.getElementById('btnCargarElo')?.addEventListener('click', cargarTablaElo);
+    document.getElementById('btnCargarIndice')?.addEventListener('click', cargarIndiceFuerza);
+    document.getElementById('btnSimular')?.addEventListener('click', calcularEscenarios);
+
+    cargarSelecciones().then(() => {
+      poblarSelectsSimulador();
+    });
   });
 </script>
 

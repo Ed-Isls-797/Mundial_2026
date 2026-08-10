@@ -22,6 +22,10 @@ const db = mysql.createPool({
     queueLimit: 0
 });
 
+// Servicios del Motor Inteligente de Simulación (1ª entrega: Rating ELO + Índice de Fuerza)
+const eloService = require('./services/eloService')(db);
+const indiceFuerzaService = require('./services/indiceFuerzaService')(db);
+
 // === ENDPOINTS===
 // 1. Obtener todas las selecciones 
 app.get('/api/confederaciones', (req, res) => {
@@ -915,6 +919,140 @@ app.get('/api/simulacion/consulta10', (req, res) => {
             return res.status(500).json({ error: 'Error al obtener la consulta maestra' });
         }
         res.json(results);
+    });
+});
+
+// =====================================================================
+// MÓDULO ELO / ÍNDICE DE FUERZA — 1ª entrega del Motor Inteligente
+// de Simulación (10/08/2026)
+// =====================================================================
+
+// a/2. Tabla completa de Rating ELO (ordenada de mayor a menor)
+app.get('/api/elo/tabla', (req, res) => {
+    eloService.obtenerTablaRatingElo((err, tabla) => {
+        if (err) {
+            console.error('Error al obtener tabla ELO:', err);
+            return res.status(500).json({ error: 'Error al obtener la tabla de Rating ELO' });
+        }
+        res.json(tabla);
+    });
+});
+
+// b/c/e. Probabilidad esperada + vista de posibles escenarios entre dos equipos
+app.get('/api/elo/escenarios', (req, res) => {
+    const { id_local, id_visitante } = req.query;
+    if (!id_local || !id_visitante) {
+        return res.status(400).json({ error: 'Faltan id_local, id_visitante' });
+    }
+
+    eloService.verEscenarios(Number(id_local), Number(id_visitante), (err, escenarios) => {
+        if (err) {
+            console.error('Error al calcular escenarios:', err);
+            return res.status(500).json({ error: 'Error al calcular escenarios' });
+        }
+        res.json(escenarios);
+    });
+});
+
+// d. Actualizar el Rating tras un partido YA jugado (usa el resultado real cargado)
+app.post('/api/elo/actualizar/:idPartido', (req, res) => {
+    const { idPartido } = req.params;
+
+    db.query(
+        'SELECT id_local, id_visitante, goles_local, goles_visitante FROM partidos WHERE id_partido = ?',
+        [idPartido],
+        (err, rows) => {
+            if (err) {
+                console.error('Error al buscar partido:', err);
+                return res.status(500).json({ error: 'Error al buscar el partido' });
+            }
+            const partido = rows[0];
+            if (!partido || partido.goles_local === null || partido.goles_visitante === null) {
+                return res.status(400).json({ error: 'El partido no existe o no tiene resultado cargado' });
+            }
+
+            eloService.actualizarRating(
+                idPartido, partido.id_local, partido.id_visitante, partido.goles_local, partido.goles_visitante, null,
+                (err2, resultado) => {
+                    if (err2) {
+                        console.error('Error al actualizar ELO:', err2);
+                        return res.status(500).json({ error: 'Error al actualizar el Rating ELO' });
+                    }
+                    res.json(resultado);
+                }
+            );
+        }
+    );
+});
+
+// Recalcula el ELO de TODOS los partidos ya jugados, en orden cronológico.
+// Útil para (re)generar el historial completo de una sola vez desde cero.
+app.post('/api/elo/recalcular-todo', (req, res) => {
+    db.query(
+        `SELECT id_partido, id_local, id_visitante, goles_local, goles_visitante
+         FROM partidos
+         WHERE goles_local IS NOT NULL AND goles_visitante IS NOT NULL
+         ORDER BY fecha ASC, id_partido ASC`,
+        (err, partidos) => {
+            if (err) {
+                console.error('Error al listar partidos jugados:', err);
+                return res.status(500).json({ error: 'Error al listar los partidos jugados' });
+            }
+
+            // 1. Reiniciar todos los ratings a 1500 antes de recalcular
+            db.query('UPDATE elo_rating SET rating_actual = 1500, rating_inicial = 1500', (errReset) => {
+                if (errReset) {
+                    console.error('Error al reiniciar ratings:', errReset);
+                    return res.status(500).json({ error: 'Error al reiniciar los ratings' });
+                }
+
+                db.query('DELETE FROM elo_historial', (errDel) => {
+                    if (errDel) {
+                        console.error('Error al limpiar historial:', errDel);
+                        return res.status(500).json({ error: 'Error al limpiar el historial de ELO' });
+                    }
+
+                    let index = 0;
+                    function procesarSiguiente() {
+                        if (index >= partidos.length) {
+                            return res.json({ mensaje: `ELO recalculado para ${partidos.length} partidos`, total: partidos.length });
+                        }
+                        const p = partidos[index];
+                        index++;
+                        eloService.actualizarRating(
+                            p.id_partido, p.id_local, p.id_visitante, p.goles_local, p.goles_visitante, null,
+                            (errUpd) => {
+                                if (errUpd) console.error(`Error al actualizar ELO del partido ${p.id_partido}:`, errUpd);
+                                procesarSiguiente();
+                            }
+                        );
+                    }
+                    procesarSiguiente();
+                });
+            });
+        }
+    );
+});
+
+// 3. Tabla de Índice de Fuerza (todas las selecciones, calculado por suma de ponderaciones)
+app.get('/api/indice-fuerza/tabla', (req, res) => {
+    indiceFuerzaService.obtenerTablaIndiceFuerza((err, tabla) => {
+        if (err) {
+            console.error('Error al obtener índice de fuerza:', err);
+            return res.status(500).json({ error: 'Error al obtener el índice de fuerza' });
+        }
+        res.json(tabla);
+    });
+});
+
+// 4. Tabla de ponderación de pesos (para mostrarla en el sistema y en el PDF de la entrega)
+app.get('/api/indice-fuerza/ponderaciones', (req, res) => {
+    indiceFuerzaService.obtenerPonderaciones((err, pesos) => {
+        if (err) {
+            console.error('Error al obtener ponderaciones:', err);
+            return res.status(500).json({ error: 'Error al obtener las ponderaciones' });
+        }
+        res.json(pesos);
     });
 });
 
