@@ -25,7 +25,8 @@ const db = mysql.createPool({
 // Servicios del Motor Inteligente de Simulación (1ª entrega: Rating ELO + Índice de Fuerza)
 const eloService = require('./services/eloService')(db);
 const indiceFuerzaService = require('./services/indiceFuerzaService')(db);
-
+const poissonService = require('./services/poissonService')(db);
+const montecarloService = require('./services/montecarloService')(db);
 // === ENDPOINTS===
 // 1. Obtener todas las selecciones 
 app.get('/api/confederaciones', (req, res) => {
@@ -1055,7 +1056,51 @@ app.get('/api/indice-fuerza/ponderaciones', (req, res) => {
         res.json(pesos);
     });
 });
+// ================================================================
+// MODELO POISSON — 2a entrega (12/08/2026)
+// ================================================================
+app.get('/api/poisson/simular', (req, res) => {
+    const idLocal = parseInt(req.query.id_local);
+    const idVisitante = parseInt(req.query.id_visitante);
 
+    if (!idLocal || !idVisitante) {
+        return res.status(400).json({ error: 'Debes indicar id_local e id_visitante' });
+    }
+    if (idLocal === idVisitante) {
+        return res.status(400).json({ error: 'El local y el visitante no pueden ser el mismo equipo' });
+    }
+
+    poissonService.simularPoisson(idLocal, idVisitante, (err, resultado) => {
+        if (err) {
+            console.error('Error en /api/poisson/simular:', err);
+            return res.status(500).json({ error: 'Error al calcular el modelo Poisson' });
+        }
+        res.json(resultado);
+    });
+});
+// ================================================================
+// MODELO MONTE CARLO — 2a entrega (12/08/2026)
+// ================================================================
+app.get('/api/montecarlo/simular', (req, res) => {
+    const idLocal = parseInt(req.query.id_local);
+    const idVisitante = parseInt(req.query.id_visitante);
+    const simulaciones = parseInt(req.query.simulaciones) || 10000;
+
+    if (!idLocal || !idVisitante) {
+        return res.status(400).json({ error: 'Debes indicar id_local e id_visitante' });
+    }
+    if (idLocal === idVisitante) {
+        return res.status(400).json({ error: 'El local y el visitante no pueden ser el mismo equipo' });
+    }
+
+    montecarloService.simularMonteCarlo(idLocal, idVisitante, simulaciones, (err, resultado) => {
+        if (err) {
+            console.error('Error en /api/montecarlo/simular:', err);
+            return res.status(500).json({ error: 'Error al ejecutar la simulación Monte Carlo' });
+        }
+        res.json(resultado);
+    });
+});
 // Levantar el servidor
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);

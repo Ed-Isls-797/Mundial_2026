@@ -57,6 +57,8 @@
               <button class="motor-tab active" data-tab="elo">📈 Rating ELO</button>
               <button class="motor-tab" data-tab="indice">⚖️ Índice de Fuerza</button>
               <button class="motor-tab" data-tab="simulador">🆚 Simulador de Partido</button>
+              <button class="motor-tab" data-tab="poisson">🎲 Modelo Poisson</button>
+              <button class="motor-tab" data-tab="montecarlo">🔁 Monte Carlo</button>
             </div>
 
             <!-- ---------- TAB: RATING ELO ---------- -->
@@ -98,6 +100,44 @@
               </div>
               <button class="btn-motor btn-motor-full" id="btnSimular">⚡ Calcular escenarios</button>
               <div id="contenedorEscenarios"></div>
+            </div>
+            <!-- ---------- TAB: MODELO POISSON ---------- -->
+            <div class="motor-panel" id="panel-poisson">
+              <p class="panel-desc">Estima goles esperados (λ) por selección combinando su ataque, la defensa rival y el Índice de Fuerza, y calcula la probabilidad exacta de cada marcador.</p>
+              <div class="simulador-selectores">
+                <div class="simulador-equipo">
+                  <label for="selectLocalPoisson">🏠 Local</label>
+                  <select id="selectLocalPoisson"></select>
+                </div>
+                <div class="simulador-vs">VS</div>
+                <div class="simulador-equipo">
+                  <label for="selectVisitantePoisson">✈️ Visitante</label>
+                  <select id="selectVisitantePoisson"></select>
+                </div>
+              </div>
+              <button class="btn-motor btn-motor-full" id="btnPoisson">🎲 Calcular modelo Poisson</button>
+              <div id="contenedorPoisson"></div>
+            </div>
+            <!-- ---------- TAB: MONTE CARLO ---------- -->
+            <div class="motor-panel" id="panel-montecarlo">
+              <p class="panel-desc">Simula miles de partidos independientes (muestreo Poisson) para estimar probabilidades empíricas de resultado y los marcadores más frecuentes.</p>
+              <div class="simulador-selectores">
+                <div class="simulador-equipo">
+                  <label for="selectLocalMC">🏠 Local</label>
+                  <select id="selectLocalMC"></select>
+                </div>
+                <div class="simulador-vs">VS</div>
+                <div class="simulador-equipo">
+                  <label for="selectVisitanteMC">✈️ Visitante</label>
+                  <select id="selectVisitanteMC"></select>
+                </div>
+              </div>
+              <div class="mc-simulaciones">
+                <label for="inputSimulaciones">Número de simulaciones:</label>
+                <input type="number" id="inputSimulaciones" value="10000" min="100" max="100000" step="1000" />
+              </div>
+              <button class="btn-motor btn-motor-full" id="btnMonteCarlo">🔁 Ejecutar Monte Carlo</button>
+              <div id="contenedorMonteCarlo"></div>
             </div>
           </section>
 
@@ -957,6 +997,19 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
     // Por defecto, elegir dos selecciones distintas
     selectLocal.value = selecciones[0]?.id_seleccion || '';
     selectVisitante.value = selecciones[1]?.id_seleccion || selecciones[0]?.id_seleccion || '';
+     // Reutilizar las mismas opciones para Poisson y Monte Carlo
+    ['selectLocalPoisson', 'selectVisitantePoisson', 'selectLocalMC', 'selectVisitanteMC'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (sel) sel.innerHTML = opciones;
+    });
+    const setDefault = (idA, idB) => {
+      const a = document.getElementById(idA);
+      const b = document.getElementById(idB);
+      if (a) a.value = selecciones[0]?.id_seleccion || '';
+      if (b) b.value = selecciones[1]?.id_seleccion || selecciones[0]?.id_seleccion || '';
+    };
+    setDefault('selectLocalPoisson', 'selectVisitantePoisson');
+    setDefault('selectLocalMC', 'selectVisitanteMC');
   }
 
   async function calcularEscenarios() {
@@ -1035,7 +1088,193 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
       btn.classList.remove('cargando');
     }
   }
+// ---------------- Modelo Poisson ----------------
+  async function calcularPoisson() {
+    const btn = document.getElementById('btnPoisson');
+    const contenedor = document.getElementById('contenedorPoisson');
+    const idLocal = document.getElementById('selectLocalPoisson').value;
+    const idVisitante = document.getElementById('selectVisitantePoisson').value;
 
+    if (!idLocal || !idVisitante) {
+      contenedor.innerHTML = `<div class="placeholder-mini error-mini">Selecciona ambos equipos</div>`;
+      return;
+    }
+    if (idLocal === idVisitante) {
+      contenedor.innerHTML = `<div class="placeholder-mini error-mini">El local y el visitante no pueden ser el mismo equipo</div>`;
+      return;
+    }
+
+    btn.disabled = true;
+    btn.classList.add('cargando');
+
+    try {
+      const resp = await fetch(`${API_BASE}/api/poisson/simular?id_local=${idLocal}&id_visitante=${idVisitante}`);
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.error || `Error ${resp.status}: ${resp.statusText}`);
+      }
+      const data = await resp.json();
+
+      const local = selecciones.find(s => String(s.id_seleccion) === String(idLocal));
+      const visitante = selecciones.find(s => String(s.id_seleccion) === String(idVisitante));
+
+      let html = `
+        <div class="escenario-resumen">
+          <div class="escenario-equipo">
+            ${crearImgBandera(local?.nombre)}
+            <span>${local?.nombre || 'Local'}</span>
+            <strong>λ = ${data.lambda_local}</strong>
+            <span class="prob-esperada">${data.probabilidad_local}% victoria</span>
+          </div>
+          <div class="escenario-vs">VS</div>
+          <div class="escenario-equipo">
+            ${crearImgBandera(visitante?.nombre)}
+            <span>${visitante?.nombre || 'Visitante'}</span>
+            <strong>λ = ${data.lambda_visitante}</strong>
+            <span class="prob-esperada">${data.probabilidad_visitante}% victoria</span>
+          </div>
+        </div>
+
+        <div class="escenarios-grid">
+          <div class="escenario-card">
+            <div class="escenario-icono">🏆</div>
+            <div class="escenario-titulo">Gana Local</div>
+            <div class="escenario-ratings"><div><strong>${data.probabilidad_local}%</strong></div></div>
+          </div>
+          <div class="escenario-card">
+            <div class="escenario-icono">🤝</div>
+            <div class="escenario-titulo">Empate</div>
+            <div class="escenario-ratings"><div><strong>${data.probabilidad_empate}%</strong></div></div>
+          </div>
+          <div class="escenario-card">
+            <div class="escenario-icono">✈️</div>
+            <div class="escenario-titulo">Gana Visitante</div>
+            <div class="escenario-ratings"><div><strong>${data.probabilidad_visitante}%</strong></div></div>
+          </div>
+        </div>
+
+        <div class="ponderaciones-box">
+          <div class="ponderaciones-titulo">🎯 Marcador más probable: ${data.marcador_mas_probable.resultado} (${data.marcador_mas_probable.probabilidad}%)</div>
+        </div>
+        <div class="tabla-scroll">
+          <table class="tabla-resultados">
+            <thead>
+              <tr>
+                <th>Local \\ Visitante</th>
+                ${Array.from({ length: data.max_goles + 1 }, (_, gv) => `<th>${gv}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${data.matriz_marcadores.map((fila, gl) => `
+                <tr>
+                  <td><strong>${gl}</strong></td>
+                  ${fila.map(p => `<td>${p}%</td>`).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      contenedor.innerHTML = html;
+
+    } catch (error) {
+      console.error('❌ Error calculando modelo Poisson:', error);
+      contenedor.innerHTML = `<div class="placeholder-mini error-mini">❌ ${error.message}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('cargando');
+    }
+  }
+  // ---------------- Monte Carlo ----------------
+  async function calcularMonteCarlo() {
+    const btn = document.getElementById('btnMonteCarlo');
+    const contenedor = document.getElementById('contenedorMonteCarlo');
+    const idLocal = document.getElementById('selectLocalMC').value;
+    const idVisitante = document.getElementById('selectVisitanteMC').value;
+    const simulaciones = document.getElementById('inputSimulaciones').value || 10000;
+
+    if (!idLocal || !idVisitante) {
+      contenedor.innerHTML = `<div class="placeholder-mini error-mini">Selecciona ambos equipos</div>`;
+      return;
+    }
+    if (idLocal === idVisitante) {
+      contenedor.innerHTML = `<div class="placeholder-mini error-mini">El local y el visitante no pueden ser el mismo equipo</div>`;
+      return;
+    }
+
+    btn.disabled = true;
+    btn.classList.add('cargando');
+    try {
+      const resp = await fetch(`${API_BASE}/api/montecarlo/simular?id_local=${idLocal}&id_visitante=${idVisitante}&simulaciones=${simulaciones}`);
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.error || `Error ${resp.status}: ${resp.statusText}`);
+      }
+      const data = await resp.json();
+
+      const local = selecciones.find(s => String(s.id_seleccion) === String(idLocal));
+      const visitante = selecciones.find(s => String(s.id_seleccion) === String(idVisitante));
+
+      let html = `
+        <div class="escenario-resumen">
+          <div class="escenario-equipo">
+            ${crearImgBandera(local?.nombre)}
+            <span>${local?.nombre || 'Local'}</span>
+            <strong>${data.promedio_goles_local} goles prom.</strong>
+            <span class="prob-esperada">${data.probabilidad_local}% victoria</span>
+          </div>
+          <div class="escenario-vs">VS</div>
+          <div class="escenario-equipo">
+            ${crearImgBandera(visitante?.nombre)}
+            <span>${visitante?.nombre || 'Visitante'}</span>
+            <strong>${data.promedio_goles_visitante} goles prom.</strong>
+            <span class="prob-esperada">${data.probabilidad_visitante}% victoria</span>
+          </div>
+        </div>
+        <p class="panel-desc">Basado en <strong>${data.simulaciones.toLocaleString()}</strong> simulaciones independientes.</p>
+
+        <div class="escenarios-grid">
+          <div class="escenario-card">
+            <div class="escenario-icono">🏆</div>
+            <div class="escenario-titulo">Gana Local</div>
+            <div class="escenario-ratings"><div><strong>${data.probabilidad_local}%</strong></div></div>
+          </div>
+          <div class="escenario-card">
+            <div class="escenario-icono">🤝</div>
+            <div class="escenario-titulo">Empate</div>
+            <div class="escenario-ratings"><div><strong>${data.probabilidad_empate}%</strong></div></div>
+          </div>
+          <div class="escenario-card">
+            <div class="escenario-icono">✈️</div>
+            <div class="escenario-titulo">Gana Visitante</div>
+            <div class="escenario-ratings"><div><strong>${data.probabilidad_visitante}%</strong></div></div>
+          </div>
+        </div>
+        <div class="tabla-scroll">
+          <table class="tabla-resultados">
+            <thead>
+              <tr><th>Marcador</th><th>Frecuencia</th><th>% de simulaciones</th></tr>
+            </thead>
+            <tbody>
+              ${data.marcadores_mas_frecuentes.map(m => `
+                <tr><td><strong>${m.marcador}</strong></td><td>${m.frecuencia.toLocaleString()}</td><td>${m.porcentaje}%</td></tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      contenedor.innerHTML = html;
+
+    } catch (error) {
+      console.error('❌ Error ejecutando Monte Carlo:', error);
+      contenedor.innerHTML = `<div class="placeholder-mini error-mini">❌ ${error.message}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('cargando');
+    }
+  }
   // ================================================================
   // INICIALIZAR
   // ================================================================
@@ -1048,7 +1287,8 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
     document.getElementById('btnCargarElo')?.addEventListener('click', cargarTablaElo);
     document.getElementById('btnCargarIndice')?.addEventListener('click', cargarIndiceFuerza);
     document.getElementById('btnSimular')?.addEventListener('click', calcularEscenarios);
-
+    document.getElementById('btnPoisson')?.addEventListener('click', calcularPoisson);
+    document.getElementById('btnMonteCarlo')?.addEventListener('click', calcularMonteCarlo);
     cargarSelecciones().then(() => {
       poblarSelectsSimulador();
     });

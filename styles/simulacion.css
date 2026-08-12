@@ -320,6 +320,25 @@
     padding-bottom: 10px;
 }
 
+.mc-simulaciones {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.mc-simulaciones label {
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.mc-simulaciones input[type="number"] {
+  padding: 8px 12px;
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  font-size: 14px;
+  width: 120px;
+}
 /* Resumen de escenarios */
 .escenario-resumen {
     display: flex;
