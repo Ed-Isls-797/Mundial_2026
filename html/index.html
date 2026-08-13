@@ -159,5 +159,36 @@
         </footer>
       </main>
     </div>
+
+    <!-- POPUP DE CRÉDITOS -->
+    <div class="credits-overlay" id="creditsOverlay">
+      <div class="credits-modal" role="dialog" aria-modal="true" aria-labelledby="creditsTitle">
+        <button class="credits-close" id="creditsClose" aria-label="Cerrar">&times;</button>
+        <span class="index-tag">Créditos</span>
+        <h2 id="creditsTitle">Sobre este proyecto</h2>
+        <p class="credits-text">Este proyecto está hecho por:</p>
+        <ul class="credits-list">
+          <li>Edrei Noar Islas Ábrego</li>
+          <li>Valentín López Pérez</li>
+          <li>José Manuel Vázquez Espinoza</li>
+          <li>Iván Contreras Martínez</li>
+          <li>Omar Velázquez Pérez</li>
+        </ul>
+        <button class="cta credits-accept" id="creditsAccept">Entendido</button>
+      </div>
+    </div>
+
+    <script>
+      const creditsOverlay = document.getElementById("creditsOverlay");
+      const closeCredits = () => creditsOverlay.classList.remove("is-open");
+      document.getElementById("creditsClose").addEventListener("click", closeCredits);
+      document.getElementById("creditsAccept").addEventListener("click", closeCredits);
+      creditsOverlay.addEventListener("click", (e) => {
+        if (e.target === creditsOverlay) closeCredits();
+      });
+      window.addEventListener("DOMContentLoaded", () => {
+        creditsOverlay.classList.add("is-open");
+      });
+    </script>
   </body>
 </html>

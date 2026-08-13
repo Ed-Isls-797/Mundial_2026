@@ -25,7 +25,7 @@ REM Espera a que el servidor levante
 timeout /t 3 /nobreak > nul
 
 REM Abre el navegador automáticamente
-start http://localhost:3000/html/simulacion.html
+start http://localhost:3000/html/index.html
 
 echo.
 echo El sistema esta corriendo. NO CIERRES la ventana "Servidor Mundial 2026".

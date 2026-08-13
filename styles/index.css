@@ -373,3 +373,96 @@ main {
         animation: none;
     }
 }
+
+/* ---------- POPUP DE CRÉDITOS ---------- */
+.credits-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 26, 60, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+    padding: 24px;
+}
+
+.credits-overlay.is-open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.credits-modal {
+    position: relative;
+    background: var(--navy);
+    color: var(--white);
+    max-width: 460px;
+    width: 100%;
+    padding: 40px 36px;
+    border-radius: 6px;
+    border-top: 4px solid var(--gold);
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+    text-align: center;
+    transform: translateY(-16px);
+    transition: transform 0.25s ease;
+}
+
+.credits-overlay.is-open .credits-modal {
+    transform: translateY(0);
+}
+
+.credits-modal h2 {
+    font-family: 'Anton', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.5px;
+    margin: 8px 0 20px;
+}
+
+.credits-text {
+    font-size: 0.95rem;
+    color: rgba(247, 245, 239, 0.85);
+    margin-bottom: 16px;
+}
+
+.credits-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 28px;
+}
+
+.credits-list li {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--gold-light);
+    padding: 10px 14px;
+    background: rgba(212, 175, 55, 0.08);
+    border-left: 3px solid var(--gold);
+    border-radius: 2px;
+}
+
+.credits-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    background: none;
+    border: none;
+    color: var(--gold-light);
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.credits-close:hover {
+    color: var(--gold);
+}
+
+.credits-accept {
+    border: none;
+    cursor: pointer;
+}
