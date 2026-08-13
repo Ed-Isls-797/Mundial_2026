@@ -10,6 +10,10 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
+// Sirve html/, styles/ e imagenes/ para que iniciar.bat pueda abrir el sitio por http://
+app.use(express.static(path.join(__dirname, '..')));
+app.get('/', (req, res) => res.redirect('/html/simulacion.html'));
+
 // Conexión a la base de datos
 const db = mysql.createPool({
     host: process.env.DB_HOST,
