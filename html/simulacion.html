@@ -59,6 +59,7 @@
               <button class="motor-tab" data-tab="simulador">🆚 Simulador de Partido</button>
               <button class="motor-tab" data-tab="poisson">🎲 Modelo Poisson</button>
               <button class="motor-tab" data-tab="montecarlo">🔁 Monte Carlo</button>
+              <button class="motor-tab" data-tab="torneo">🏆 Torneo Completo</button>
             </div>
 
             <!-- ---------- TAB: RATING ELO ---------- -->
@@ -133,11 +134,32 @@
                 </div>
               </div>
               <div class="mc-simulaciones">
-                <label for="inputSimulaciones">Número de simulaciones:</label>
+                <label  for="inputSimulaciones" class="mi-etiqueta-color">Número de simulaciones:</label>
                 <input type="number" id="inputSimulaciones" value="10000" min="100" max="100000" step="1000" />
               </div>
               <button class="btn-motor btn-motor-full" id="btnMonteCarlo">🔁 Ejecutar Monte Carlo</button>
               <div id="contenedorMonteCarlo"></div>
+            </div>
+
+            <!-- ---------- TAB: TORNEO COMPLETO ---------- -->
+            <div class="motor-panel" id="panel-torneo">
+              <p class="panel-desc">Simula el Mundial completo (Fase de grupos → Dieciseisavos → Octavos → Cuartos → Semifinal → Tercer lugar → Final) miles de veces para estimar probabilidades de clasificación, avance por fase y campeonato. Puedes fijar resultados reales/hipotéticos de partidos de grupos antes de simular.</p>
+
+              <div class="panel-toolbar">
+                <div class="mc-simulaciones">
+                  <label for="inputSimulacionesTorneo">Número de simulaciones:</label>
+                  <input type="number" id="inputSimulacionesTorneo" value="5000" min="100" max="20000" step="500" />
+                </div>
+                <button class="btn-motor" id="btnCargarPartidosTorneo">🔄 Cargar partidos de grupos</button>
+                <button class="btn-motor" id="btnLimpiarPartidosTorneo">🧹 Vaciar resultados fijos</button>
+                <button class="btn-motor btn-motor-full" id="btnSimularTorneo">🏆 Simular Torneo (N veces)</button>
+              </div>
+
+              <div id="contenedorPartidosFijos">
+                <div class="placeholder-mini">Haz clic en "Cargar partidos de grupos" para fijar resultados antes de simular</div>
+              </div>
+
+              <div id="contenedorTorneoResultado"></div>
             </div>
           </section>
 
@@ -1276,6 +1298,242 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
     }
   }
   // ================================================================
+  // TORNEO COMPLETO — 3a entrega
+  // ================================================================
+  let partidosGruposCache = [];
+
+  async function cargarPartidosFijosTorneo() {
+    const btn = document.getElementById('btnCargarPartidosTorneo');
+    const contenedor = document.getElementById('contenedorPartidosFijos');
+    btn.disabled = true;
+    btn.classList.add('cargando');
+    try {
+      const resp = await fetch(`${API_BASE}/api/partidos?fase=Fase de grupos`);
+      if (!resp.ok) throw new Error(`Error ${resp.status}: ${resp.statusText}`);
+      const data = await resp.json();
+      partidosGruposCache = data;
+
+      // Agrupar por grupo
+      const porGrupo = {};
+      data.forEach(p => {
+        const g = p.grupo || 'Sin grupo';
+        if (!porGrupo[g]) porGrupo[g] = [];
+        porGrupo[g].push(p);
+      });
+
+      let html = `<p class="panel-desc">Deja vacíos los partidos que quieras simular con Poisson. Llena los goles de los partidos que quieras fijar (por ejemplo, resultados reales ya conocidos).</p>`;
+      Object.keys(porGrupo).sort().forEach(grupo => {
+        html += `<div class="ponderaciones-box"><div class="ponderaciones-titulo">Grupo ${grupo}</div></div>`;
+        html += `<div class="tabla-scroll"><table class="tabla-resultados"><tbody>`;
+        porGrupo[grupo].forEach(p => {
+          html += `
+            <tr data-id-partido="${p.id_partido}">
+              <td><div class="texto-con-bandera">${crearImgBandera(p.local, 'bandera-mini')} ${p.local}</div></td>
+              <td style="width:70px;"><input type="number" min="0" max="20" class="input-gol-fijo" data-lado="local" value="${p.goles_local ?? ''}" style="width:56px;" /></td>
+              <td style="width:20px; text-align:center;">-</td>
+              <td style="width:70px;"><input type="number" min="0" max="20" class="input-gol-fijo" data-lado="visitante" value="${p.goles_visitante ?? ''}" style="width:56px;" /></td>
+              <td><div class="texto-con-bandera">${crearImgBandera(p.visitante, 'bandera-mini')} ${p.visitante}</div></td>
+            </tr>
+          `;
+        });
+        html += `</tbody></table></div>`;
+      });
+      contenedor.innerHTML = html;
+    } catch (error) {
+      console.error('❌ Error cargando partidos de grupos:', error);
+      contenedor.innerHTML = `<div class="placeholder-mini error-mini">❌ ${error.message}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('cargando');
+    }
+  }
+
+  function obtenerResultadosFijos() {
+    const fijos = {};
+    document.querySelectorAll('#contenedorPartidosFijos tr[data-id-partido]').forEach(fila => {
+      const idPartido = fila.dataset.idPartido;
+      const inputLocal = fila.querySelector('.input-gol-fijo[data-lado="local"]');
+      const inputVisitante = fila.querySelector('.input-gol-fijo[data-lado="visitante"]');
+      const gl = inputLocal?.value;
+      const gv = inputVisitante?.value;
+      if (gl !== '' && gv !== '' && gl !== undefined && gv !== undefined) {
+        fijos[idPartido] = { goles_local: parseInt(gl), goles_visitante: parseInt(gv) };
+      }
+    });
+    return fijos;
+  }
+
+  // Vacía todos los inputs de goles de la fase de grupos, para volver a
+  // dejar que el Poisson/Monte Carlo calcule esos partidos desde cero.
+  function limpiarPartidosFijosTorneo() {
+    document.querySelectorAll('#contenedorPartidosFijos .input-gol-fijo').forEach(input => {
+      input.value = '';
+    });
+  }
+
+  // Después de simular, rellena (visualmente) los campos de la fase de
+  // grupos que quedaron vacíos con el marcador calculado por el bracket de
+  // ejemplo, para que se vea qué resultado se usó. No pisa los partidos que
+  // el usuario sí fijó manualmente (esos ya tienen valor).
+  function rellenarPartidosGruposConCalculados(resultadosGrupos) {
+    if (!resultadosGrupos || !resultadosGrupos.length) return;
+    const porId = {};
+    resultadosGrupos.forEach(p => { porId[p.id_partido] = p; });
+
+    document.querySelectorAll('#contenedorPartidosFijos tr[data-id-partido]').forEach(fila => {
+      const idPartido = fila.dataset.idPartido;
+      const resultado = porId[idPartido];
+      if (!resultado) return;
+
+      const inputLocal = fila.querySelector('.input-gol-fijo[data-lado="local"]');
+      const inputVisitante = fila.querySelector('.input-gol-fijo[data-lado="visitante"]');
+
+      if (inputLocal && inputLocal.value === '') {
+        inputLocal.value = resultado.goles_local;
+        inputLocal.classList.add('gol-calculado');
+      }
+      if (inputVisitante && inputVisitante.value === '') {
+        inputVisitante.value = resultado.goles_visitante;
+        inputVisitante.classList.add('gol-calculado');
+      }
+    });
+  }
+
+  function renderizarProbabilidadCampeon(probabilidades) {
+    const filas = Object.values(probabilidades).sort((a, b) => b.prob_campeon - a.prob_campeon);
+    return `
+      <div class="tabla-scroll">
+        <table class="tabla-resultados">
+          <thead><tr><th>#</th><th>Selección</th><th>🏆 Campeón</th><th>🥈 Subcampeón</th><th>🥉 3er lugar</th><th>Final</th><th>Semis</th><th>Cuartos</th><th>Octavos</th><th>Clasificar</th></tr></thead>
+          <tbody>
+            ${filas.map((f, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td><div class="texto-con-bandera">${crearImgBandera(f.nombre, 'bandera-mini')} ${f.nombre}</div></td>
+                <td><strong>${f.prob_campeon}%</strong></td>
+                <td>${f.prob_subcampeon}%</td>
+                <td>${f.prob_tercer_lugar}%</td>
+                <td>${f.prob_final}%</td>
+                <td>${f.prob_semifinal}%</td>
+                <td>${f.prob_cuartos}%</td>
+                <td>${f.prob_octavos}%</td>
+                <td>${f.prob_clasificar}%</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function renderizarProbabilidadAvance(probabilidades) {
+    const filas = Object.values(probabilidades).sort((a, b) => a.nombre.localeCompare(b.nombre));
+    return `
+      <div class="tabla-scroll">
+        <table class="tabla-resultados">
+          <thead><tr><th>Selección</th><th>% Victoria</th><th>% Empate</th><th>% Derrota</th><th>Prom. GF</th><th>Prom. GC</th><th>Dif. Goles</th></tr></thead>
+          <tbody>
+            ${filas.map(f => `
+              <tr>
+                <td><div class="texto-con-bandera">${crearImgBandera(f.nombre, 'bandera-mini')} ${f.nombre}</div></td>
+                <td>${f.prob_ganar_partido}%</td>
+                <td>${f.prob_empatar_partido}%</td>
+                <td>${f.prob_perder_partido}%</td>
+                <td>${f.promedio_goles_favor}</td>
+                <td>${f.promedio_goles_contra}</td>
+                <td>${f.diferencia_promedio_goles}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function filaPartidoBracket(p) {
+    return `
+      <div class="escenario-card">
+        <div class="escenario-ratings">
+          <div><div class="texto-con-bandera">${crearImgBandera(p.local?.nombre, 'bandera-mini')} ${p.local?.nombre || ''}</div><strong>${p.goles_local}</strong></div>
+          <div><div class="texto-con-bandera">${crearImgBandera(p.visitante?.nombre, 'bandera-mini')} ${p.visitante?.nombre || ''}</div><strong>${p.goles_visitante}</strong></div>
+        </div>
+        ${p.penales_local !== undefined && p.penales_local !== null ? `<div class="prob-esperada">Penales: ${p.penales_local}-${p.penales_visitante}</div>` : ''}
+      </div>
+    `;
+  }
+
+  function renderizarBracketEjemplo(bracket) {
+    return `
+      <h3 style="margin-top:20px;">🎲 Instancia representativa de la simulación</h3>
+      <div class="ponderaciones-box">
+        <div class="ponderaciones-titulo">
+          🏆 Campeón: ${bracket.campeon?.nombre || '—'} &nbsp;|&nbsp;
+          🥈 Subcampeón: ${bracket.subcampeon?.nombre || '—'} &nbsp;|&nbsp;
+          🥉 3er lugar: ${bracket.tercerLugar?.nombre || '—'}
+        </div>
+      </div>
+
+      <h4>Dieciseisavos de final</h4>
+      <div class="escenarios-grid">${bracket.resultadosDieciseisavos.map(filaPartidoBracket).join('')}</div>
+      <h4>Octavos de final</h4>
+      <div class="escenarios-grid">${bracket.resultadosOctavos.map(filaPartidoBracket).join('')}</div>
+      <h4>Cuartos de final</h4>
+      <div class="escenarios-grid">${bracket.resultadosCuartos.map(filaPartidoBracket).join('')}</div>
+      <h4>Semifinal</h4>
+      <div class="escenarios-grid">${bracket.resultadosSemis.map(filaPartidoBracket).join('')}</div>
+      <h4>Tercer lugar</h4>
+      <div class="escenarios-grid">${bracket.resultadoTercerLugar.map(filaPartidoBracket).join('')}</div>
+      <h4>Final</h4>
+      <div class="escenarios-grid">${bracket.resultadoFinal.map(filaPartidoBracket).join('')}</div>
+    `;
+  }
+
+  async function simularTorneoCompleto() {
+    const btn = document.getElementById('btnSimularTorneo');
+    const contenedor = document.getElementById('contenedorTorneoResultado');
+    const simulaciones = document.getElementById('inputSimulacionesTorneo').value || 5000;
+
+    btn.disabled = true;
+    btn.classList.add('cargando');
+    contenedor.innerHTML = `<div class="placeholder-mini">⏳ Simulando el torneo ${simulaciones} veces… esto puede tardar unos segundos</div>`;
+
+    try {
+      const resultadosFijos = obtenerResultadosFijos();
+      const resp = await fetch(`${API_BASE}/api/torneo/simular`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resultadosFijos, simulaciones: parseInt(simulaciones) })
+      });
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.error || `Error ${resp.status}: ${resp.statusText}`);
+      }
+      const data = await resp.json();
+
+      let html = `<p class="panel-desc">Resultados agregados sobre <strong>${data.simulaciones.toLocaleString()}</strong> simulaciones completas del torneo.</p>`;
+      html += `<h3>🏆 Probabilidad de Campeón y avance por fase</h3>`;
+      html += renderizarProbabilidadCampeon(data.probabilidades);
+      html += `<h3 style="margin-top:20px;">📊 Rendimiento esperado por partido</h3>`;
+      html += renderizarProbabilidadAvance(data.probabilidades);
+      html += renderizarBracketEjemplo(data.bracketEjemplo);
+
+      contenedor.innerHTML = html;
+
+      // Rellenar visualmente (solo los campos vacíos) los partidos de la
+      // fase de grupos con el marcador que se calculó en la instancia de
+      // ejemplo, para que se vea qué resultado se usó sin afectar los
+      // resultados que el usuario sí fijó manualmente.
+      rellenarPartidosGruposConCalculados(data.bracketEjemplo?.resultadosGrupos);
+    } catch (error) {
+      console.error('❌ Error simulando el torneo:', error);
+      contenedor.innerHTML = `<div class="placeholder-mini error-mini">❌ ${error.message}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('cargando');
+    }
+  }
+
+  // ================================================================
   // INICIALIZAR
   // ================================================================
   document.addEventListener('DOMContentLoaded', function() {
@@ -1289,6 +1547,9 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
     document.getElementById('btnSimular')?.addEventListener('click', calcularEscenarios);
     document.getElementById('btnPoisson')?.addEventListener('click', calcularPoisson);
     document.getElementById('btnMonteCarlo')?.addEventListener('click', calcularMonteCarlo);
+    document.getElementById('btnCargarPartidosTorneo')?.addEventListener('click', cargarPartidosFijosTorneo);
+    document.getElementById('btnLimpiarPartidosTorneo')?.addEventListener('click', limpiarPartidosFijosTorneo);
+    document.getElementById('btnSimularTorneo')?.addEventListener('click', simularTorneoCompleto);
     cargarSelecciones().then(() => {
       poblarSelectsSimulador();
     });

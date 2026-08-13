@@ -27,6 +27,7 @@ const eloService = require('./services/eloService')(db);
 const indiceFuerzaService = require('./services/indiceFuerzaService')(db);
 const poissonService = require('./services/poissonService')(db);
 const montecarloService = require('./services/montecarloService')(db);
+const torneoSimulationService = require('./services/torneoSimulationService')(db);
 // === ENDPOINTS===
 // 1. Obtener todas las selecciones 
 app.get('/api/confederaciones', (req, res) => {
@@ -1097,6 +1098,18 @@ app.get('/api/montecarlo/simular', (req, res) => {
         if (err) {
             console.error('Error en /api/montecarlo/simular:', err);
             return res.status(500).json({ error: 'Error al ejecutar la simulación Monte Carlo' });
+        }
+        res.json(resultado);
+    });
+});
+// 9. Simulación completa del torneo (3a entrega) — Monte Carlo sobre todo el Mundial
+app.post('/api/torneo/simular', (req, res) => {
+    const { resultadosFijos, simulaciones } = req.body || {};
+
+    torneoSimulationService.simularTorneoCompleto(resultadosFijos, simulaciones, (err, resultado) => {
+        if (err) {
+            console.error('Error simulando el torneo:', err);
+            return res.status(500).json({ error: 'Error al simular el torneo completo' });
         }
         res.json(resultado);
     });

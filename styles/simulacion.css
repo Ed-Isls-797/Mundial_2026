@@ -26,6 +26,7 @@
     box-sizing: border-box;
 }
 
+
 /* -------- Header -------- */
 .simulacion-header {
     background: var(--bg-header);
@@ -49,7 +50,7 @@
 .simulacion-header p {
     margin: 8px 0 0;
     font-size: 0.95rem;
-    color: var(--gold-light);
+    color: white;
 }
 
 /* -------- Main -------- */
@@ -60,7 +61,7 @@
 }
 
 .simulacion-main h2 {
-    color: var(--gold-light);
+    color: white;
     border-bottom: 2px solid var(--gold);
     display: inline-block;
     padding-bottom: 6px;
@@ -83,7 +84,7 @@
 .motor-header h2 {
     margin: 0 0 6px;
     font-size: 1.3rem;
-    color: var(--texto);
+    color: white;
     font-weight: 700;
     border-bottom: none;
     padding-bottom: 0;
@@ -110,7 +111,7 @@
     background: transparent;
     border: none;
     border-bottom: 3px solid transparent;
-    color: var(--texto-suave);
+    color: white;
     font-size: 14px;
     font-weight: 600;
     padding: 10px 16px;
@@ -120,14 +121,127 @@
 }
 
 .motor-tab:hover {
-    color: var(--texto);
+    color: white;
     background: rgba(255, 255, 255, 0.04);
 }
 
 .motor-tab.active {
-    color: var(--gold-light);
+    color: white;
     border-bottom-color: var(--gold);
     background: rgba(212, 175, 55, 0.06);
+}
+/* ============================================================
+   3a entrega — Torneo Completo (agregar a simulacion.css)
+   ============================================================ */
+
+/* Inputs de gol dentro de la tabla de partidos fijos */
+.input-gol-fijo {
+  padding: 4px 6px;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.input-gol-fijo:focus {
+  outline: none;
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.15);
+}
+
+/* Marca los campos de la fase de grupos que se rellenaron automáticamente
+   con el marcador calculado por la simulación (a diferencia de los que el
+   usuario fijó manualmente), para distinguirlos visualmente */
+.input-gol-fijo.gol-calculado {
+  background: rgba(212, 175, 55, 0.18);
+  border-color: var(--gold, #d4af37);
+  color: var(--gold-light, #e8c84a);
+  font-weight: 700;
+}
+
+/* Contenedor de partidos fijos por grupo */
+#contenedorPartidosFijos h4,
+#contenedorTorneoResultado h3,
+#contenedorTorneoResultado h4 {
+  margin: 18px 0 8px;
+  font-family: "Inter", sans-serif;
+  font-weight: 700;
+  color: white;
+}
+
+#contenedorTorneoResultado h3 {
+  font-size: 18px;
+  border-bottom: 2px solid var(--glass-border, rgba(255,255,255,0.15));
+  padding-bottom: 6px;
+}
+
+#contenedorTorneoResultado h4 {
+  font-size: 15px;
+  color: white;
+}
+
+/* Toolbar del panel de torneo: alinea input de simulaciones + botones */
+#panel-torneo .panel-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* Tarjetas de partido en el bracket de ejemplo (reutiliza .escenario-card) */
+#contenedorTorneoResultado .escenarios-grid .escenario-card {
+  min-width: 220px;
+}
+
+#contenedorTorneoResultado .escenario-card .escenario-ratings > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+/* Bandera genérica (arregla banderas gigantes fuera de .tabla-resultados,
+   p. ej. en el bracket de ejemplo y otras tarjetas con .texto-con-bandera) */
+.bandera-mini {
+  width: 24px;
+  height: 16px;
+  object-fit: cover;
+  border-radius: 3px;
+  display: inline-block;
+  vertical-align: middle;
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+  flex-shrink: 0;
+}
+
+.texto-con-bandera {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.texto-con-bandera > span,
+.texto-con-bandera {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Dentro del bracket, el nombre no debe empujar el marcador fuera de la tarjeta */
+#contenedorTorneoResultado .escenario-ratings .texto-con-bandera {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+/* Grid de tarjetas de bracket un poco más compacto que el de escenarios normal */
+#contenedorTorneoResultado .escenarios-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
 /* -------- Panels -------- */
@@ -329,7 +443,7 @@
 
 .mc-simulaciones label {
   font-weight: 600;
-  color: var(--navy);
+  color: white;
 }
 
 .mc-simulaciones input[type="number"] {
@@ -390,7 +504,7 @@
 
 .escenario-vs {
     font-weight: 800;
-    color: var(--texto-suave);
+    color: white;
     font-size: 14px;
 }
 
@@ -422,7 +536,7 @@
 .escenario-titulo {
     font-size: 13.5px;
     font-weight: 700;
-    color: var(--gold-light);
+    color: white;
     margin-bottom: 12px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -442,7 +556,7 @@
 }
 
 .escenario-ratings strong {
-    color: var(--texto);
+    color: white;
     font-size: 13px;
 }
 
@@ -686,7 +800,7 @@
 .resultados-area .resultado-header h2 {
     font-size: 17px;
     font-weight: 600;
-    color: var(--texto);
+    color: white;
     margin: 0;
     border-bottom: none;
     padding-bottom: 0;
@@ -694,7 +808,7 @@
 
 .resultados-area .resultado-header .info {
     font-size: 13px;
-    color: var(--texto-suave);
+    color: white;
     display: flex;
     align-items: center;
     gap: 10px;
