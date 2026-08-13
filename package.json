@@ -2,15 +2,20 @@
   "name": "mundial_2026",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "js/server.js",
   "dependencies": {
-    "dotenv": "^17.4.2"
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mysql2": "^3.22.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
     "@types/node": "^26.1.2"
   },
-  "scripts": {},
+  "scripts": {
+    "start": "node js/server.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Ed-Isls-797/Mundial_2026.git"
