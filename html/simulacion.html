@@ -1449,6 +1449,70 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
     `;
   }
 
+  // j) Rival más probable en cada fase, por selección
+  function renderizarRivalMasProbable(probabilidades) {
+    const filas = Object.values(probabilidades).sort((a, b) => a.nombre.localeCompare(b.nombre));
+    const fasesOrden = ['Fase de grupos', 'Dieciseisavos de final', 'Octavos de final', 'Cuartos de final', 'Semifinal', 'Tercer lugar', 'Final'];
+
+    return `
+      <div class="tabla-scroll">
+        <table class="tabla-resultados">
+          <thead>
+            <tr>
+              <th>Selección</th>
+              ${fasesOrden.map(f => `<th>${f}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${filas.map(f => `
+              <tr>
+                <td><div class="texto-con-bandera">${crearImgBandera(f.nombre, 'bandera-mini')} ${f.nombre}</div></td>
+                ${fasesOrden.map(fase => {
+                  const r = f.rival_mas_probable_por_fase?.[fase];
+                  if (!r) return `<td>—</td>`;
+                  return `<td><div class="texto-con-bandera">${crearImgBandera(r.nombre_rival, 'bandera-mini')} ${r.nombre_rival} <span class="prob-esperada">(${r.probabilidad}%)</span></div></td>`;
+                }).join('')}
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // k) Marcador más frecuente por enfrentamiento y fase
+  function renderizarMarcadoresMasFrecuentes(marcadoresMasFrecuentes, selMap) {
+    const filas = Object.entries(marcadoresMasFrecuentes).map(([clave, info]) => {
+      const [fase, par] = clave.split('::');
+      const [idA, idB] = par.split('-').map(Number);
+      return { fase, idA, idB, marcador: info.marcador, probabilidad: info.probabilidad };
+    }).sort((a, b) => b.probabilidad - a.probabilidad);
+
+    return `
+      <div class="tabla-scroll">
+        <table class="tabla-resultados">
+          <thead><tr><th>Fase</th><th>Enfrentamiento</th><th>Marcador más frecuente</th><th>% de simulaciones</th></tr></thead>
+          <tbody>
+            ${filas.map(f => {
+              const nombreA = selMap[f.idA]?.nombre || `#${f.idA}`;
+              const nombreB = selMap[f.idB]?.nombre || `#${f.idB}`;
+              return `
+                <tr>
+                  <td>${f.fase}</td>
+                  <td>
+                    <div class="texto-con-bandera">${crearImgBandera(nombreA, 'bandera-mini')} ${nombreA} vs ${crearImgBandera(nombreB, 'bandera-mini')} ${nombreB}</div>
+                  </td>
+                  <td><strong>${f.marcador}</strong></td>
+                  <td>${f.probabilidad}%</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
   function filaPartidoBracket(p) {
     return `
       <div class="escenario-card">
@@ -1509,11 +1573,23 @@ const API_BASE = 'http://localhost:3000'; // ← URL fija de tu servidor
       }
       const data = await resp.json();
 
+      // selMap local (id_seleccion -> {nombre, bandera}) construido a partir
+      // de las probabilidades ya devueltas, para usarlo en la tabla de
+      // marcadores más frecuentes sin depender de otra petición.
+      const selMapLocal = {};
+      Object.values(data.probabilidades).forEach(p => {
+        selMapLocal[p.id_seleccion] = { nombre: p.nombre, bandera: p.bandera };
+      });
+
       let html = `<p class="panel-desc">Resultados agregados sobre <strong>${data.simulaciones.toLocaleString()}</strong> simulaciones completas del torneo.</p>`;
       html += `<h3>🏆 Probabilidad de Campeón y avance por fase</h3>`;
       html += renderizarProbabilidadCampeon(data.probabilidades);
       html += `<h3 style="margin-top:20px;">📊 Rendimiento esperado por partido</h3>`;
       html += renderizarProbabilidadAvance(data.probabilidades);
+      html += `<h3 style="margin-top:20px;">🎯 Rival más probable por fase</h3>`;
+      html += renderizarRivalMasProbable(data.probabilidades);
+      html += `<h3 style="margin-top:20px;">📌 Marcador más frecuente por enfrentamiento</h3>`;
+      html += renderizarMarcadoresMasFrecuentes(data.marcadoresMasFrecuentes, selMapLocal);
       html += renderizarBracketEjemplo(data.bracketEjemplo);
 
       contenedor.innerHTML = html;
