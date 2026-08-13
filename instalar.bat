@@ -27,28 +27,46 @@ if exist "node_modules" (
     rmdir /s /q "node_modules"
 )
 
-REM Elimina package-lock.json viejo por si referencia versiones incompatibles
-if exist "package-lock.json" (
-    del /f /q "package-lock.json"
+if exist "node_modules" (
+    echo.
+    echo ============================================
+    echo   ERROR: no se pudo eliminar node_modules
+    echo ============================================
+    echo Puede ser un problema de permisos de escritura en esta carpeta.
+    echo Cierra cualquier proceso que lo este usando e intenta de nuevo.
+    pause
+    exit /b 1
 )
 
 echo Instalando dependencias (esto puede tardar unos minutos)...
-call npm install
+if exist "package-lock.json" (
+    REM npm ci: instalacion limpia y determinista basada en package-lock.json
+    call npm ci
+) else (
+    call npm install
+)
 
 if %errorlevel% neq 0 (
     echo.
     echo ============================================
-    echo   ERROR: npm install fallo
+    echo   ERROR: la instalacion de dependencias fallo
     echo ============================================
     echo Revisa el mensaje de error arriba.
     pause
     exit /b 1
 )
 
-if not exist "node_modules\express" (
+set FALTAN_DEPENDENCIAS=0
+for %%D in (express mysql2 cors dotenv) do (
+    if not exist "node_modules\%%D" (
+        echo ADVERTENCIA: node_modules\%%D no se encontro despues de la instalacion.
+        set FALTAN_DEPENDENCIAS=1
+    )
+)
+
+if "%FALTAN_DEPENDENCIAS%"=="1" (
     echo.
-    echo ADVERTENCIA: node_modules\express no se encontro despues de npm install.
-    echo Revisa que package.json incluya "express" en sus dependencias.
+    echo Revisa que package.json incluya todas las dependencias necesarias.
     pause
     exit /b 1
 )
